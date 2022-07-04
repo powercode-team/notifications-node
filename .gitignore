@@ -1,0 +1,15 @@
+## IDE & Env
+.idea
+.env
+
+## Logs
+*.log
+
+node_modules/
+/dist
+/src/*.js
+
+# TypeScript cache
+*.tsbuildinfo
+
+packages/*/lib
