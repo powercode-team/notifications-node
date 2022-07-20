@@ -29,3 +29,8 @@ Queued asynchronous notifications system
 ### Transports
 
 - [Nodemailer transport](./packages/transport/mailer/README.md)
+
+### Storages
+
+- [TypeORM v0.2](./packages/storage/typeorm-0.2/README.md)
+- [TypeORM v0.3](./packages/storage/typeorm-0.3/README.md)

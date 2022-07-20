@@ -1,0 +1,45 @@
+{
+  "name": "@notifications-system/storage-typeorm-0.2",
+  "version": "0.0.0",
+  "license": "ISC",
+  "description": "Notifications TypeORM storage",
+  "author": "and.xdev <and.xdev@gmail.com>",
+  "homepage": "https://github.com/powercode-team/notifications-node.git",
+  "keywords": [
+    "notifications",
+    "node"
+  ],
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/powercode-team/notifications-node.git"
+  },
+  "scripts": {
+    "rimraf": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
+    "build": "tsc --build",
+    "rebuild": "npm run rimraf && npm run build",
+    "build-dev": "tsc --build && tsc --sourceMap --declarationMap",
+    "rebuild-dev": "npm run rimraf && npm run build-dev",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@notifications-system/core": "^0.0"
+  },
+  "devDependencies": {
+    "typeorm-extension": "^1.2.2"
+  },
+  "peerDependencies": {
+    "typeorm": "~0.2.45"
+  }
+}
