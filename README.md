@@ -25,3 +25,7 @@ Queued asynchronous notifications system
 ## Packages
 
 ### [Notifications Core](./packages/core/README.md)
+
+### Transports
+
+- [Nodemailer transport](./packages/transport/mailer/README.md)
