@@ -28,8 +28,8 @@ The Core module provide basic notifications/queue logic and interfaces such as:
 
 ## Services
 
-- NotificationService: Base service for sending/processing notification or query history;
-- NotificationQueueManager: Processing Queue by transport, optional. If it isn't used, you must to manually call
+- NotificationService: Base service for sending/processing notifications;
+- NotificationQueueManager: Queue processing. If it isn't used, you must to manually call
   NotificationService::processQueue(transports?: ITransport | ITransport[]) periodically;
 
 ## Default internal configuration of NotificationService
@@ -63,9 +63,11 @@ import {
   TRANSPORT_CONSOLE,
 } from '@notifications-system/core';
 
+let service: NotificationService;
+
 async function main() {
   // Instantiate Notification Service
-  const service = new NotificationService(
+  service = new NotificationService(
     // In-Memory StorageService (IStorageService implementation)
     await new MemoryStorage().initialize(),
     // All necessary ITransport instances for current project
@@ -74,8 +76,8 @@ async function main() {
       // ...,
       // new TransportXXXX(),
     ],
-    // optional, override "internal" default configuration
-    // In addition this "default" configuration can be overridden by specific ITransport::config
+    // optionally override internal default configuration
+    // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
     {
       // ResendErrorHandler with GeometryProgressionStrategy for "error processing"
       // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
@@ -113,21 +115,22 @@ async function main() {
   //   email: 'user-01@mail.test',
   //   phone: '+380001234567',
   // };
+  //
   // Or for single transport we can use transport specific string
-  // For sample for email transport:
+  // As sample for email transport:
   const recipient: string = 'user-01@mail.test User-01'
 
   // Prepare data for send (IOriginalData format)
   const data: IOriginalData = {
     recipient,
-    // Payload can be IOriginalPayload or its inheritance:
+    // Payload will be processed by appropriate IDataProvider implementation
+    // It can be IOriginalPayload or its inheritance:
     payload: {
       title: 'Notification',
       body: 'Hello from Notification System!!',
     },
-    // Or Payload can be a simple message:
-    payload: 'Hello from Notification System!!',
-    // Payload will be processed by appropriate IDataProvider implementation
+    // Or a simple message body string:
+    // payload: 'Hello from Notification System!!',
   };
 
   // Find transport aliases for certain purpose (from database or configuration or define manually)
@@ -140,9 +143,14 @@ async function main() {
 main();
 ```
 
-## NestJS Integration
+## NestJS Integration (with Mail transport and TypeORM-0.2.45 storage)
 
-### Install Notification System with Mail transport and TypeORM-0.2.45 storage
+### Used Packages:
+
+> - [Mailer README](../transport/mailer/README.md)
+> - [TypeORM v0.2 README](../storage/typeorm-0.2/README.md)
+
+### Install Notification System with necessary packages
 
 - `npm i typeorm@0.2.45`
 - `npm i --save-dev typeorm-extension@1.2.2`
@@ -150,42 +158,40 @@ main();
 - `npm i @notifications-system/transport-mailer`
 - `npm i @notifications-system/storage-typeorm-0.2`
 
-### Package documentations
-> - [Mailer README](../transport/mailer/README.md)
-> - [TypeORM v0.2 README](../storage/typeorm-0.2/README.md)
-
-### Migrations
-
-> Install migrations: [@notifications-system/storage-typeorm-0.2 README](../storage/typeorm-0.2/README.md)
-
 ### Prepare
 
-[config/database.ts]:
+- Copy content of [.env.dist](../storage/typeorm-0.2/.env.dist) to your .env and change parameters for you database connection
+- Copy [ormconfig](../storage/typeorm-0.2/ormconfig.js) to project root directory
+``` cp ./node_modules/@notifications-system/storage-typeorm-0.2/ormconfig.js ./```
+
+### Run Migrations
+
+- Copy migrations from library to project migrations directory
+
+```
+cp ./node_modules/@notifications-system/storage-typeorm-0.2/migrations/*.js ./migrations/
+```
+
+- Run migrations
+
+```
+./node_modules/.bin/typeorm migration:run
+```
+
+[src/config/database.ts]:
+
+- [TypeORM config documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
 
 ```typescript
 import { registerAs } from '@nestjs/config';
 import { StorageOptions } from '@notifications-system/storage-typeorm-0.2';
 
-require('dotenv').config();
-const boolean = require('@notifications-system/core').boolean;
-
-export const cfgDatabase: StorageOptions = {
-  type: process.env.DB_TYPE,
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  database: process.env.DB_NAME,
-  username: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  logging: boolean(process.env.DB_LOGGING),
-  synchronize: boolean(process.env.DB_SYNC),
-  entities: ['./**/*.entity.{ts,js}'],
-  migrations: ['./migrations/*.js'],
-};
+export const cfgDatabase: StorageOptions = require('../../ormconfig.js');
 
 export const configDatabase = registerAs('database', () => cfgDatabase);
 ```
 
-[config/smtp.transport.ts]:
+[src/config/smtp.transport.ts]:
 
 ```typescript
 import { registerAs } from '@nestjs/config';
@@ -208,7 +214,7 @@ export const cfgTransportSmtp: ISmtpTransportConfig = {
 export const configTransportSmtp = registerAs('transport.smtp', () => cfgTransportSmtp);
 ```
 
-[app.module.ts]:
+[src/app.module.ts]:
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -241,8 +247,8 @@ import { NotificationService } from './notification.service';
           [
             new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
           ],
-          // optional, override "internal" default configuration
-          // In addition this "default" configuration can be overridden by specific ITransport::config
+          // optionally override internal default configuration
+          // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
           {
             // ResendErrorHandler with GeometryProgressionStrategy for "error processing"
             // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
@@ -274,7 +280,7 @@ export class AppModule {
 }
 ```
 
-[notification.service.ts]:
+[src/notification.service.ts]:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -296,9 +302,6 @@ import { In } from 'typeorm';
  */
 @Injectable()
 export class NotificationService extends BaseService<TypeormStorage> {
-  // Sample method for current project
-  // All are optional
-
   /**
    * Find Notification (history) by "recipient"
    */
@@ -314,20 +317,6 @@ export class NotificationService extends BaseService<TypeormStorage> {
     }
 
     return this.storage.notificationRepo?.findByRecipient(userId, where, options) ?? [];
-  }
-
-  /**
-   * Find queue notification by "transport"
-   */
-  findQueueByTransport(transport: string, options?: IOptions): Promise<IQueueEntity[]> {
-    return this.storage.queueRepo.findByTransport(transport, options);
-  }
-
-  /**
-   * Find "history" notification by "transport"
-   */
-  async findByTransport(transport: string | string[], options?: IOptions): Promise<INotificationEntity<string, string>[]> {
-    return this.storage.notificationRepo?.findByTransport(transport, options) ?? [];
   }
 }
 ```

@@ -4,6 +4,21 @@
 
 Queued asynchronous notifications system
 
+## Packages
+
+### [Notifications Core](./packages/core/README.md)
+
+### Transports
+
+- [Nodemailer transport](./packages/transport/mailer/README.md)
+
+### Storages
+
+- [TypeORM v0.2](./packages/storage/typeorm-0.2/README.md)
+- [TypeORM v0.3](./packages/storage/typeorm-0.3/README.md)
+
+## Development
+
 ### Prepare
 
 - `npm ci`
@@ -22,23 +37,10 @@ Queued asynchronous notifications system
 
 - `lerna run rebuild && lerna publish`
 
-## Packages
-
-### [Notifications Core](./packages/core/README.md)
-
-### Transports
-
-- [Nodemailer transport](./packages/transport/mailer/README.md)
-
-### Storages
-
-- [TypeORM v0.2](./packages/storage/typeorm-0.2/README.md)
-- [TypeORM v0.3](./packages/storage/typeorm-0.3/README.md)
-
 ## Nest Demo project
 
 - `cd nest.sample`
-- `cp .env.sample .env`
+- `cp .env.dist .env`
 - `npm ci`
 - `npm run rebuild`
 - Start demo container: `docker-compose -f ../docker/docker-compose.yml up -d`

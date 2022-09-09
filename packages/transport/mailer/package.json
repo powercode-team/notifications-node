@@ -4,7 +4,11 @@
   "license": "ISC",
   "description": "Mail transport for Notifications System",
   "author": "and.xdev <and.xdev@gmail.com>",
-  "homepage": "https://github.com/powercode-team/notifications-node.git",
+  "homepage": "https://github.com/powercode-team/notifications-node/tree/main/packages/transport/mailer#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/powercode-team/notifications-node/tree/main/packages/transport/mailer"
+  },
   "keywords": [
     "notifications",
     "node"
@@ -20,10 +24,6 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/powercode-team/notifications-node.git"
   },
   "scripts": {
     "rimraf": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",

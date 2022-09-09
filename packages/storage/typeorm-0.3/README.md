@@ -33,7 +33,7 @@ cp ./node_modules/@notifications-system/storage-typeorm-0.3/migrations/*.js ./mi
 - [documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
 
 - [ormconfig](./ormconfig.js)
-- [.env.sample](./.env.sample)
+- [.env.dist](./.env.dist)
 
 ## Sample usage:
 
