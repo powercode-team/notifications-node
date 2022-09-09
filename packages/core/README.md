@@ -123,7 +123,7 @@ async function main() {
   // Prepare data for send (IOriginalData format)
   const data: IOriginalData = {
     recipient,
-    // Payload will be processed by appropriate IDataProvider implementation
+    // Payload will be processed by appropriate IDataProvider implementation for specific transport
     // It can be IOriginalPayload or its inheritance:
     payload: {
       title: 'Notification',
@@ -147,8 +147,8 @@ main();
 
 ### Used Packages:
 
-> - [Mailer README](../transport/mailer/README.md)
-> - [TypeORM v0.2 README](../storage/typeorm-0.2/README.md)
+> - [Mailer README](https://github.com/powercode-team/notifications-node/tree/main/packages/transport/mailer/README.md)
+> - [TypeORM v0.2 README](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.2/README.md)
 
 ### Install Notification System with necessary packages
 
@@ -160,65 +160,84 @@ main();
 
 ### Prepare
 
-- Copy content of [.env.dist](../storage/typeorm-0.2/.env.dist) to your .env and change parameters for you database connection
-- Copy [ormconfig](../storage/typeorm-0.2/ormconfig.js) to project root directory
-``` cp ./node_modules/@notifications-system/storage-typeorm-0.2/ormconfig.js ./```
+- Copy content of [mailer .env.dist](https://github.com/powercode-team/notifications-node/tree/main/packages/transport/mailer/.env.dist)
+  to your .env and change parameters for you SMTP Service
+- Copy content
+  of [typeorm-0.2 .env.dist](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.2/.env.dist)
+  to your .env and change parameters for you database connection
 
-### Run Migrations
+### Migrations
 
-- Copy migrations from library to project migrations directory
+Copy [ormconfig](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.2/ormconfig.js)
+([documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file))
+to project root directory:
+
+```
+cp ./node_modules/@notifications-system/storage-typeorm-0.2/ormconfig.js ./
+```
+
+Copy migrations from library to project migrations directory:
 
 ```
 cp ./node_modules/@notifications-system/storage-typeorm-0.2/migrations/*.js ./migrations/
 ```
 
-- Run migrations
+Run migrations:
 
 ```
 ./node_modules/.bin/typeorm migration:run
 ```
 
-[src/config/database.ts]:
+### Create `notification.service.ts` file in `src` directory
 
-- [TypeORM config documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
-
-```typescript
-import { registerAs } from '@nestjs/config';
-import { StorageOptions } from '@notifications-system/storage-typeorm-0.2';
-
-export const cfgDatabase: StorageOptions = require('../../ormconfig.js');
-
-export const configDatabase = registerAs('database', () => cfgDatabase);
-```
-
-[src/config/smtp.transport.ts]:
+[src/notification.service.ts]:
 
 ```typescript
-import { registerAs } from '@nestjs/config';
-import { ISmtpTransportConfig } from '@notifications-system/transport-mailer';
+import { Injectable } from '@nestjs/common';
+import {
+  INotificationEntity,
+  IOptions,
+  IQueueEntity,
+  ITransport,
+  NotificationService as BaseService,
+  UNREAD_STATUSES,
+} from '@notifications-system/core';
+import { FindWhere, TypeormStorage } from '@notifications-system/storage-typeorm-0.2';
+import { In } from 'typeorm';
 
-export const cfgTransportSmtp: ISmtpTransportConfig = {
-  options: {
-    host: process.env.MAIL_HOST,
-    port: Number(process.env.MAIL_PORT) || undefined,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  },
-  defaults: {
-    from: process.env.MAIL_FROM,
-  },
-};
+/**
+ * NotificationService with Typeorm Storage for save Queue / History
+ * Main purpose for override BaseService is @Injectable() annotation
+ * Also in addition you can extend functionality of notification service specifically for project
+ */
+@Injectable()
+export class NotificationService extends BaseService<TypeormStorage> {
+  /**
+   * Find Notification (history) by "recipient"
+   */
+  async findByRecipient(userId: string, transports?: ITransport[], withRead = false, options?: IOptions)
+    : Promise<INotificationEntity<string, string>[]> {
 
-export const configTransportSmtp = registerAs('transport.smtp', () => cfgTransportSmtp);
+    const where: FindWhere<INotificationEntity<string, string>> = {};
+    if (transports && transports.length > 0) {
+      where.transport = In(transports);
+    }
+    if (!withRead) {
+      where.status = In(UNREAD_STATUSES);
+    }
+
+    return this.storage.notificationRepo?.findByRecipient(userId, where, options) ?? [];
+  }
+}
 ```
+
+### Modify `app.module.ts`
 
 [src/app.module.ts]:
 
 ```typescript
+require('dotenv').config();
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationQueueManager } from '@notifications-system/core';
 import { StorageOptions, TypeormStorage } from '@notifications-system/storage-typeorm-0.2';
 import { ISmtpTransportConfig, MailDataProvider, SmtpTransport } from '@notifications-system/transport-mailer';
@@ -226,26 +245,28 @@ import { configDatabase, configTransportSmtp } from './config';
 import { NotificationService } from './notification.service';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [
-        configDatabase,
-        configTransportSmtp,
-      ],
-    }),
-  ],
   providers: [
-    ConfigService,
     {
       // Sample NotificationService with Typeorm Storage for save Queue / History
       provide: NotificationService,
-      useFactory: async (configService: ConfigService) => {
+      useFactory: async () => {
         return new NotificationService(
-          await new TypeormStorage().initialize(configService.get<StorageOptions>('database')),
+          await new TypeormStorage().initialize(require('../../ormconfig.js')),
           // All necessary ITransport instances for current project
           [
-            new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
+            new SmtpTransport({
+              options: {
+                host: process.env.MAIL_HOST,
+                port: Number(process.env.MAIL_PORT) || undefined,
+                auth: {
+                  user: process.env.MAIL_USER,
+                  pass: process.env.MAIL_PASS,
+                },
+              },
+              defaults: {
+                from: process.env.MAIL_FROM,
+              },
+            }, new MailDataProvider()),
           ],
           // optionally override internal default configuration
           // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
@@ -266,7 +287,6 @@ import { NotificationService } from './notification.service';
           },
         );
       },
-      inject: [ConfigService],
     },
   ],
 })
@@ -276,47 +296,6 @@ export class AppModule {
   // Start NotificationQueueManager for queue processing
   constructor(service: NotificationService) {
     this.notificationQueueManager = new NotificationQueueManager(service).queueStart();
-  }
-}
-```
-
-[src/notification.service.ts]:
-
-```typescript
-import { Injectable } from '@nestjs/common';
-import {
-  INotificationEntity,
-  IOptions,
-  IQueueEntity,
-  ITransport,
-  NotificationService as BaseService,
-  UNREAD_STATUSES,
-} from '@notifications-system/core';
-import { FindWhere, TypeormStorage } from '@notifications-system/storage-typeorm-0.2';
-import { In } from 'typeorm';
-
-/**
- * NotificationService with Typeorm Storage for save Queue / History
- * Main purpose for override BaseService is @Injectable() annotation
- * Also in addition you can extends functionality of notification service specificaly for project
- */
-@Injectable()
-export class NotificationService extends BaseService<TypeormStorage> {
-  /**
-   * Find Notification (history) by "recipient"
-   */
-  async findByRecipient(userId: string, transports?: ITransport[], withRead = false, options?: IOptions)
-    : Promise<INotificationEntity<string, string>[]> {
-
-    const where: FindWhere<INotificationEntity<string, string>> = {};
-    if (transports && transports.length > 0) {
-      where.transport = In(transports);
-    }
-    if (!withRead) {
-      where.status = In(UNREAD_STATUSES);
-    }
-
-    return this.storage.notificationRepo?.findByRecipient(userId, where, options) ?? [];
   }
 }
 ```

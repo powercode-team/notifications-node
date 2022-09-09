@@ -2,7 +2,7 @@
 
 ## Description
 
-TypeORM v0.2 storage for Notifications System
+TypeORM v0.2 storage for [Notifications System](https://www.npmjs.com/package/@notifications-system/core)
 
 ## Install
 
@@ -32,8 +32,8 @@ cp ./node_modules/@notifications-system/storage-typeorm-0.2/migrations/*.js ./mi
 
 - [documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
 
-- [ormconfig](./ormconfig.js)
-- [.env.dist](./.env.dist)
+- [ormconfig](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.2/ormconfig.js)
+- [.env.dist](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.2/.env.dist)
 
 ## Sample usage:
 

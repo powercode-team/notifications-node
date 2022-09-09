@@ -2,7 +2,7 @@
 
 ## Description
 
-Nodemailer transport for Notifications System
+Nodemailer transport for [Notifications System](https://www.npmjs.com/package/@notifications-system/core)
 
 ## Install
 
@@ -10,10 +10,8 @@ Nodemailer transport for Notifications System
 
 ## Usage
 
-- `MailDataProvider` - Transform data from `IOriginalData` format to transport specific `IMailData` format, implements `IDataProvider`
-
 ```typescript
-import { MemoryStorage, NotificationService } from '@notifications-system/core';
+import { IOriginalData, MemoryStorage, NotificationQueueManager, NotificationService } from '@notifications-system/core';
 import { MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@notifications-system/transport-mailer';
 
 let service: NotificationService;
@@ -35,13 +33,17 @@ async function main() {
         defaults: {
           from: process.env.MAIL_FROM,
         },
+        // MailDataProvider - IDataProvider implementation to transform data from `IOriginalData` format to transport specific `IMailData` format
       }, new MailDataProvider()),
+      // ...,
+      // new TRANSPORT_XXXX(),
     ],
   );
   new NotificationQueueManager(service).queueStart();
 
 
   // Sample usage
-  service.send(TRANSPORT_SMTP, { recipient: 'user@mail.test', payload: 'Test Notification' });
+  const data: IOriginalData = { recipient: 'user@mail.test', payload: 'Test Notification' };
+  service.send([TRANSPORT_SMTP/*, TRANSPORT_XXXX*/], data);
 }
 ```
