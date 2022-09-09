@@ -25,17 +25,17 @@ Queued asynchronous notifications system
 - `lerna link`
 - `lerna bootstrap`
 
-### Develop
+### Build for Development
 
 - `lerna run rebuild-dev`
 
-### Production
+### Build for Production / NPM Publish
 
 - `lerna run rebuild`
 
-### Publish
+### NPM Publish
 
-- `lerna run rebuild && lerna publish`
+- `lerna run rebuild && lerna publish --force-publish`
 
 ## Nest Demo project
 
