@@ -1,6 +1,6 @@
 {
   "name": "@notifications-system/transport-mailer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "ISC",
   "description": "Mail transport for Notifications System",
   "author": "and.xdev <and.xdev@gmail.com>",
@@ -34,7 +34,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@notifications-system/core": "^1.0.0",
+    "@notifications-system/core": "^1.0.1",
     "@types/nodemailer": "^6.0",
     "nodemailer": "^6.0"
   }
