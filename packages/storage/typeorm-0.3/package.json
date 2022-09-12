@@ -1,6 +1,6 @@
 {
   "name": "@notifications-system/storage-typeorm-0.3",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "ISC",
   "description": "Notifications TypeORM storage",
   "author": "and.xdev <and.xdev@gmail.com>",
@@ -34,7 +34,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@notifications-system/core": "^1.0.1"
+    "@notifications-system/core": "^1.0.2"
   },
   "devDependencies": {
     "typeorm-extension": "^2.1.9"
