@@ -1,6 +1,6 @@
 {
   "name": "@notifications-system/storage-typeorm-0.2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "ISC",
   "description": "Notifications TypeORM storage",
   "author": "and.xdev <and.xdev@gmail.com>",
