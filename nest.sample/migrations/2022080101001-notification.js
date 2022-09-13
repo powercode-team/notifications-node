@@ -18,7 +18,7 @@ class Notifications2022080101001 {
                 name: 'status',
                 type: 'enum',
                 enumName: 'notification_status_enum',
-                enum: Object.values(core_1.NotificationStatusEnum).filter(val => isNaN(Number(val))),
+                enum: Object.values(core_1.NotificationStatusEnum),
             },
             {
                 name: 'transport',

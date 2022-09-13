@@ -18,7 +18,7 @@ export class Notifications2022080101001 implements MigrationInterface {
         name: 'status',
         type: 'enum',
         enumName: 'notification_status_enum',
-        enum: Object.values(NotificationStatusEnum).filter(val => isNaN(Number(val))),
+        enum: Object.values(NotificationStatusEnum),
       },
       {
         name: 'transport',
