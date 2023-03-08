@@ -1,27 +1,28 @@
-# Notifications System mailer transport
+# Notification System mailer transport
 
 ## Description
 
-Nodemailer transport for [Notifications System](https://www.npmjs.com/package/@notifications-system/core)
+Nodemailer transport for [Notification System](https://www.npmjs.com/package/@node-notifications/core)
 
 ## Install
 
-> npm i @notifications-system/transport-mailer
+> yarn add @node-notifications/transport-mailer
 
 ## Usage
 
 ```typescript
-import { IOriginalData, MemoryStorage, NotificationQueueManager, NotificationService } from '@notifications-system/core';
-import { MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@notifications-system/transport-mailer';
+import { MemoryStorage, NotificationQueueManager, NotificationService } from '@node-notifications/core';
+import { MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@node-notifications/transport-mailer';
 
 let service: NotificationService;
+let queueManager: NotificationQueueManager;
 
 async function main() {
   // Instantiate Notification Service
   service = new NotificationService(
     await new MemoryStorage().initialize(),
-    [
-      new SmtpTransport({
+    {
+      [TRANSPORT_SMTP]: new SmtpTransport({
         options: {
           host: process.env.MAIL_HOST,
           port: Number(process.env.MAIL_PORT) || undefined,
@@ -33,17 +34,17 @@ async function main() {
         defaults: {
           from: process.env.MAIL_FROM,
         },
-        // MailDataProvider - IDataProvider implementation to transform data from `IOriginalData` format to transport specific `IMailData` format
+        // MailDataProvider - IDataProvider implementation to transform data from `INotification` format to `IMailData` format
       }, new MailDataProvider()),
-      // ...,
-      // new TRANSPORT_XXXX(),
-    ],
+    },
   );
-  new NotificationQueueManager(service).queueStart();
 
+  // Instantiate Notification Queue Manager
+  queueManager = new NotificationQueueManager(service).start();
 
-  // Sample usage
-  const data: IOriginalData = { recipient: 'user@mail.test', payload: 'Test Notification' };
-  service.send([TRANSPORT_SMTP/*, TRANSPORT_XXXX*/], data);
+  // ...
+
+  // Sample usage (data: INotification)
+  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: [TRANSPORT_SMTP] }).then();
 }
 ```

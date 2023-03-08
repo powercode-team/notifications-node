@@ -9,8 +9,6 @@ import { ConsoleDataProvider } from './console-data.provider';
 export const TRANSPORT_CONSOLE = 'console';
 
 export class ConsoleTransport extends AbstractTransport<IConsoleData> {
-  alias: string = TRANSPORT_CONSOLE;
-
   config?: ITransportConfig = {
     errorHandler: new DummyErrorHandler(),
     leakyBucket: new DummyBucketService(),

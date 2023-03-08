@@ -1,6 +1,6 @@
-import { PrimaryKey } from '../../../type';
+import { PK } from '../../../type';
 
-export interface IEntity<ID extends PrimaryKey> {
+export interface IEntity<Id extends PK> {
   /** Primary key */
-  id: ID;
+  id: Id;
 }

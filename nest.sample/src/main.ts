@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { IObject } from '@notifications-system/core';
+import { IObject } from '@node-notifications/core';
 import * as hbs from 'express-handlebars';
 import { join } from 'path';
 import { AppModule } from './app.module';

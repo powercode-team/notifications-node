@@ -1,18 +1,19 @@
-import { NotificationStatusEnum } from '@notifications-system/core';
+import { NotificationStatusEnum } from '@node-notifications/core';
 import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableUnique } from 'typeorm';
 import { TableColumnOptions } from 'typeorm/schema-builder/options/TableColumnOptions';
 
 const NOTIFICATION_NAME = 'notifications';
-const QUEUE_NAME = 'queue';
+const QUEUE_NAME = 'notification_queue';
 
 export class Notifications2022080101001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const baseColumns: TableColumnOptions[] = [
       {
         name: 'id',
-        type: 'uuid',
+        type: 'bigint',
         isPrimary: true,
-        default: 'uuid_generate_v4()',
+        isGenerated: true,
+        generationStrategy: 'increment',
       },
       {
         name: 'status',
@@ -57,14 +58,32 @@ export class Notifications2022080101001 implements MigrationInterface {
     notificationColumns[0].primaryKeyConstraintName = 'PK_NOTIFICATION';
     notificationColumns.push(
       {
-        name: 'recipient_id',
-        type: 'uuid',
+        name: 'recipient_type',
+        type: 'varchar',
         isNullable: true,
+        default: null,
+        length: '20',
+      },
+      {
+        name: 'recipient_id',
+        type: 'varchar',
+        isNullable: true,
+        default: null,
+        length: '40',
+      },
+      {
+        name: 'sender_type',
+        type: 'varchar',
+        isNullable: true,
+        default: null,
+        length: '20',
       },
       {
         name: 'sender_id',
-        type: 'uuid',
+        type: 'varchar',
         isNullable: true,
+        default: null,
+        length: '40',
       },
     );
 
@@ -90,10 +109,11 @@ export class Notifications2022080101001 implements MigrationInterface {
       {
         name: 'in_process',
         type: 'boolean',
+        default: false,
       },
       {
         name: 'notification_id',
-        type: 'uuid',
+        type: 'bigint',
         isNullable: true,
       },
     );

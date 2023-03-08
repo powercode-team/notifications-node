@@ -1,6 +1,9 @@
 # Envirenment
 /.env
 
+# Docker
+docker-compose.override.yml
+
 # compiled output
 /node_modules
 

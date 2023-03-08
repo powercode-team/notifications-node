@@ -1,14 +1,13 @@
-import { INotificationBase, IObject, NotificationStatusEnum } from '@notifications-system/core';
+import { INotificationBaseEntity, IObject, NotificationStatusEnum } from '@node-notifications/core';
 import { Column, CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from './base.entity';
 
 /**
- * Notification base class
+ * Notifications base class
  */
-export abstract class NotificationBaseEntity extends BaseEntity<string> implements INotificationBase<string> {
+export abstract class NotificationBaseEntity implements INotificationBaseEntity<number> {
   /** Primary key */
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn({ type: 'bigint' })
+  id: number;
 
   /** Notification status */
   @Column('enum', {

@@ -6,40 +6,40 @@ services:
     container_name: notification-nest
     image: notification-nest
     build:
-      context: .
-      dockerfile: ./nest/Dockerfile
-    restart: always
+      context: docker/nest
     ports:
       - 3000:3000
     volumes:
-      - ..:/usr/src/app
+      - ..:/app
     networks:
       - notification
+    restart: unless-stopped
+
 
   notification-db:
     container_name: notification-db
     build:
-      context: pgsql
-    restart: always
+      context: docker/pgsql
     ports:
-      - ${DC_POSTGRES_IP:-0.0.0.0}:${DC_POSTGRES_PORT:-5432}:5432
+      - ${POSTGRES_IP:-0.0.0.0}:${DB_PORT:-5432}:5432
     volumes:
       - notification-db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${DC_DATABASE:-notification}
-      POSTGRES_PASSWORD: ${DC_POSTGRES_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-notify-demo}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
     networks:
       - notification
+    restart: unless-stopped
 
   notification-mail:
     container_name: notification-mailhog
     image: mailhog/mailhog:latest
-    restart: always
     ports:
-      - ${DC_MAIL_PORT:-1025}:1025
-      - ${DC_MAIL_WEB_PORT:-58025}:8025
+      - ${MAIL_PORT:-1025}:1025
+      - ${MAIL_WEB_PORT:-8025}:8025
     networks:
       - notification
+    restart: unless-stopped
 
 
 volumes:

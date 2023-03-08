@@ -1,14 +1,20 @@
-import { INotificationEntity, PrimaryKey } from '@notifications-system/core';
+import { INotificationEntity } from '@node-notifications/core';
 import { Column, Entity } from 'typeorm';
 import { NotificationBaseEntity } from './notification.base.entity';
 
 @Entity('notifications')
-export class NotificationEntity<USER_ID extends PrimaryKey = PrimaryKey> extends NotificationBaseEntity implements INotificationEntity<string, USER_ID> {
+export class NotificationEntity extends NotificationBaseEntity implements INotificationEntity<number, string> {
   /** Recipient */
-  @Column('uuid', { name: 'recipient_id', nullable: true })
-  recipientId?: USER_ID;
+  @Column({ type: 'varchar', name: 'recipient_type', nullable: true, default: null, length: 20 })
+  recipientType?: string;
+
+  @Column({ type: 'varchar', name: 'recipient_id', nullable: true, default: null, length: 40 })
+  recipientId?: string;
 
   /** Sender */
-  @Column('uuid', { name: 'sender_id', nullable: true, default: null })
-  senderId?: USER_ID;
+  @Column({ type: 'varchar', name: 'sender_type', nullable: true, default: null, length: 20 })
+  senderType?: string;
+
+  @Column({ type: 'varchar', name: 'sender_id', nullable: true, default: null, length: 40 })
+  senderId?: string;
 }

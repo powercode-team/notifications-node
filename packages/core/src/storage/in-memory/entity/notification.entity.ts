@@ -1,7 +1,7 @@
 import { INotificationEntity } from '../../../interface';
-import { NotificationBase } from './notification.base';
+import { MemoryNotificationBase } from './notification.base';
 
-export class MemoryNotificationEntity extends NotificationBase implements INotificationEntity<string, string> {
+export class MemoryNotificationEntity extends MemoryNotificationBase implements INotificationEntity<string, string> {
   /** Recipient ID */
   recipientId?: string;
 

@@ -1,11 +1,11 @@
-import { IErrorHandler, IQueueEntity, IResendStrategy, IResponse, ITransport } from '../../interface';
+import { IErrorHandler, INotificationQueueEntity, IResendStrategy, IResponse, ITransport } from '../../interface';
 
 export class ResendErrorHandler implements IErrorHandler {
   constructor(
     protected readonly resendStrategy: IResendStrategy,
   ) {}
 
-  handleError(entity: IQueueEntity, transport: ITransport, response: IResponse): Promise<IQueueEntity> {
+  handleError(entity: INotificationQueueEntity, transport: ITransport, response: IResponse): Promise<INotificationQueueEntity> {
     const nextSend = this.calcNextSend(entity.sentAttempts, entity.sentAt ?? undefined);
 
     if (nextSend) {

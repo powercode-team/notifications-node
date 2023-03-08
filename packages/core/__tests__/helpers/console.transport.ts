@@ -5,8 +5,6 @@ import { sleep } from './sleep';
 export const TRANSPORT_CONSOLE_TEST = 'console.test';
 
 export class ConsoleTransportTest extends AbstractTransport<IConsoleData> {
-  alias: string = TRANSPORT_CONSOLE_TEST;
-
   constructor(
     protected readonly errorPercentage: number = 50,
     protected readonly delay: { min: number, max: number } = { min: 0, max: 0 }, // in sec

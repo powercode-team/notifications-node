@@ -6,5 +6,5 @@ export interface IConfig extends Required<ITransportConfig> {
 }
 
 export interface IConfigService {
-  get<T extends any>(name: keyof IConfig, from?: IObject): T;
+  get<T>(name: keyof IConfig, from?: IObject): T;
 }

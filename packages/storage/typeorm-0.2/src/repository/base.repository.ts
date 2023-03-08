@@ -1,13 +1,13 @@
-import { IBaseRepository, IOptions, PartialRequired, PrimaryKey } from '@notifications-system/core';
+import { INotificationBaseRepository, IOptions, PartialRequired } from '@node-notifications/core';
 import { FindManyOptions, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { BaseEntity } from '../entity';
+import { NotificationBaseEntity } from '../entity';
 
-export abstract class BaseRepository<Entity extends BaseEntity<ID>, ID extends PrimaryKey>
-  extends Repository<Entity> implements IBaseRepository<Entity, ID> {
+export abstract class BaseRepository<Entity extends NotificationBaseEntity>
+  extends Repository<Entity> implements INotificationBaseRepository<Entity, number> {
 
-  async findByID(id: ID): Promise<Entity | null> {
-    return (await this.findOne({ id: <any> id })) ?? null;
+  async findById(id: number): Promise<Entity | null> {
+    return await this.findOne({ where: { id: id } }) ?? null;
   }
 
   async createEntity(data: Partial<Entity>): Promise<Entity | null> {
@@ -21,7 +21,7 @@ export abstract class BaseRepository<Entity extends BaseEntity<ID>, ID extends P
     return this.findOneOrFail({ id: <any> data.id });
   }
 
-  async deleteByID(id: ID): Promise<boolean> {
+  async deleteById(id: number): Promise<boolean> {
     const result = await this.delete({ id: <any> id });
     return !!result.affected;
   }

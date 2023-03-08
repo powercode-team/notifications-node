@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { ISmtpTransportConfig } from '@notifications-system/transport-mailer';
+import { ISmtpTransportConfig } from '@node-notifications/transport-mailer';
 
 export const cfgTransportSmtp: ISmtpTransportConfig = {
   options: {

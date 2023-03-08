@@ -1,4 +1,4 @@
-import { AbstractTransport, IDataProvider, IResponse, NotificationStatusEnum } from '@notifications-system/core';
+import { AbstractTransport, IDataProvider, IResponse, NotificationStatusEnum } from '@node-notifications/core';
 import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { IMailData } from '../mail-data.interface';
@@ -7,8 +7,6 @@ import { ISmtpTransportConfig } from './smtp.interface';
 export const TRANSPORT_SMTP = 'smtp';
 
 export class SmtpTransport extends AbstractTransport<IMailData> {
-  alias: string = TRANSPORT_SMTP;
-
   protected transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(
@@ -29,8 +27,8 @@ export class SmtpTransport extends AbstractTransport<IMailData> {
     try {
       response = await this.transporter.sendMail(data);
       status = NotificationStatusEnum.SENT;
-    } catch (e: any) {
-      response = e;
+    } catch (e) {
+      response = <SMTPTransport.SentMessageInfo> e;
       status = NotificationStatusEnum.ERROR;
     }
 

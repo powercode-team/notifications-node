@@ -1,8 +1,8 @@
 {
-  "name": "@notifications-system/core",
-  "version": "1.0.3",
+  "name": "@node-notifications/core",
+  "version": "1.0.4",
   "license": "ISC",
-  "description": "Notifications System Core",
+  "description": "Notification System Core",
   "author": "and.xdev <and.xdev@gmail.com>",
   "homepage": "https://github.com/powercode-team/notifications-node/tree/main/packages/core#readme",
   "repository": {
@@ -26,11 +26,12 @@
     "access": "public"
   },
   "scripts": {
-    "rimraf": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
+    "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
     "build": "tsc --build",
-    "rebuild": "npm run rimraf && npm run build",
+    "rebuild": "yarn clean && yarn build",
     "build-dev": "tsc --build && tsc --sourceMap --declarationMap",
-    "rebuild-dev": "npm run rimraf && npm run build-dev",
-    "test": "jest"
+    "rebuild-dev": "yarn clean && yarn build-dev",
+    "test": "jest",
+    "link": "yarn link"
   }
 }

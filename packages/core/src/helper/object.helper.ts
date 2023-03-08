@@ -1,10 +1,21 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { IObject } from '../interface';
 
 export class ObjectHelper {
-  static isObject = (obj: unknown) => obj && typeof obj === 'object' && obj.constructor.name === 'Object';
+  static isObject(object: unknown): boolean {
+    return null != object && typeof object === 'object';
+  }
 
-  static assignDeep<T extends IObject, K extends IObject>(target: T, ...sources: K[]): T {
-    return sources.reduce((result: T, source: K) => {
+  static isEmpty(object: IObject | Array<unknown>): boolean {
+    return null == object || !(Array.isArray(object) ? object.length : Object.getOwnPropertyNames(object).length);
+  }
+
+  static value(object: IObject | Array<unknown>, key: string) {
+    return Array.isArray(object) ? null : object[key];
+  }
+
+  static assignDeep(target: IObject, ...sources: IObject[]): IObject {
+    return sources.reduce((result: IObject, source: IObject) => {
       if (!source) {
         return result;
       }
@@ -26,11 +37,11 @@ export class ObjectHelper {
       });
 
       return result;
-    }, target ?? {});
+    }, target ?? <IObject> {});
   }
 
-  static mergeDeep<T extends IObject>(base: T | null, ...sources: IObject[]): T {
-    return sources.reduce((result: T, source: IObject) => {
+  static mergeDeep(base: IObject | null, ...sources: IObject[]): IObject {
+    return sources.reduce((result: IObject, source: IObject) => {
       if (!source) {
         return result;
       }
@@ -52,6 +63,6 @@ export class ObjectHelper {
       });
 
       return result;
-    }, <T> { ...base });
+    }, <IObject> { ...base });
   }
 }

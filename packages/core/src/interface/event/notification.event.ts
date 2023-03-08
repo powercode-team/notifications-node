@@ -1,9 +1,9 @@
-import { IQueueEntity } from '../storage';
+import { INotificationQueueEntity } from '../storage';
 
 export interface INotificationEvent {
-  /** Transport */
+  /** Transport Alias */
   transport: string;
 
-  /** IQueueEntity item */
-  item: IQueueEntity;
+  /** IQueueEntity Item */
+  item: INotificationQueueEntity;
 }

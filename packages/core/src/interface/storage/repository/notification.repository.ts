@@ -1,9 +1,9 @@
-import { PrimaryKey } from '../../../type';
+import { PK } from '../../../type';
 import { INotificationEntity } from '../entity';
-import { IBaseRepository } from './base.repository';
+import { INotificationBaseRepository } from './notification.base.repository';
 
-export interface INotificationRepository<ID extends PrimaryKey = PrimaryKey, USER_ID extends PrimaryKey = PrimaryKey>
-  extends IBaseRepository<INotificationEntity<ID, USER_ID>, ID> {
+export interface INotificationRepository<Id extends PK = PK, UserId extends PK = PK>
+  extends INotificationBaseRepository<INotificationEntity<Id, UserId>, Id> {
 
-  markAsRead(id: ID): Promise<INotificationEntity<ID, USER_ID> | null>;
+  markAsRead(id: Id): Promise<INotificationEntity<Id, UserId> | null>;
 }

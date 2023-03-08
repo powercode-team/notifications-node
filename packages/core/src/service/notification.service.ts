@@ -5,13 +5,14 @@ import {
   IConfigService,
   IErrorHandler,
   ILeakyBucketService,
-  INotificationBase,
+  INotification,
+  INotificationBaseEntity,
   INotificationEntity,
-  IOriginalData,
-  IQueueEntity,
+  INotificationQueueEntity,
+  INotificationStorageService,
   IResponse,
-  IStorageService,
   ITransport,
+  Transports,
 } from '../interface';
 import { INotificationEvent } from '../interface/event/notification.event';
 import { IQueueProcessingEvent } from '../interface/event/queue-processing.event';
@@ -19,25 +20,25 @@ import {
   NOTIFICATION_CREATED,
   NOTIFICATION_PROCESSED,
   NotificationStatusEnum,
-  PrimaryKey,
+  PK,
   PROCESSING_STATUSES,
   QUEUE_AFTER_PROCESSING,
   QUEUE_BEFORE_PROCESSING,
 } from '../type';
 import { ConfigService } from './config.service';
 
-export class NotificationService<STORAGE extends IStorageService = IStorageService, ORIGINAL_DATA extends IOriginalData = IOriginalData> {
-  protected readonly _storage: STORAGE;
-  protected readonly _transports: ITransport[];
+export class NotificationService<Storage extends INotificationStorageService = INotificationStorageService, Notification extends INotification = INotification> {
+  protected readonly _storage: Storage;
+  protected readonly _transports: Transports;
   protected readonly _config: IConfigService;
   protected readonly _eventEmitter: EventEmitter;
 
   constructor(
-    storage: STORAGE,
-    transports: ITransport[],
+    storage: Storage,
+    transports: Transports,
     defaultConfig: Partial<IConfig> | IConfigService = new ConfigService(),
   ) {
-    if (transports.length < 1) {
+    if (ObjectHelper.isEmpty(transports)) {
       throw new Error('Undefined transports');
     }
 
@@ -49,12 +50,16 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
     this._eventEmitter = this._config.get('eventEmitter');
   }
 
-  get storage(): STORAGE {
+  get storage(): Storage {
     return this._storage;
   }
 
   get transports(): ITransport[] {
-    return this._transports;
+    return Object.values(this._transports);
+  }
+
+  get transportAliases(): string[] {
+    return Object.getOwnPropertyNames(this._transports);
   }
 
   get config(): IConfigService {
@@ -66,34 +71,19 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
   }
 
   getTransport(alias: string): ITransport {
-    const transport = this.transports.find(transport => alias === transport.alias);
+    const transport = this._transports[alias];
     if (!transport) {
       throw new Error(`Unknown transport: '${alias}'`);
     }
     return transport;
   }
 
-  getTransports(alias?: string | string[]): ITransport[] {
-    switch (true) {
-      case typeof alias === 'string':
-        return [this.getTransport(<string> alias)];
-      case Array.isArray(alias):
-        return this.transports.filter(transport => alias?.includes(transport.alias));
-      default:
-        return this.transports;
+  getTransportConfig<T>(name: keyof IConfig, transport: string | ITransport): T {
+    if (typeof transport === 'string') {
+      transport = this.getTransport(transport);
     }
-  }
 
-  getProcessingInterval(transport: ITransport): number {
-    return this._config.get('processingInterval', transport.config);
-  }
-
-  getErrorHandler(transport: ITransport): IErrorHandler {
-    return this._config.get('errorHandler', transport.config);
-  }
-
-  getLeakyBucket(transport: ITransport): ILeakyBucketService {
-    return this._config.get('leakyBucket', transport.config);
+    return this._config.get<T>(name, transport.config);
   }
 
   /**
@@ -104,89 +94,48 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
   }
 
   /**
-   * Process ITransport Queue
-   */
-  processQueue(transports?: ITransport | ITransport[]) {
-    if (!transports || (Array.isArray(transports) && transports.length < 1)) {
-      transports = this.getTransports();
-    } else if (!Array.isArray(transports)) {
-      transports = [transports];
-    }
-
-    transports.forEach(async transport => {
-      // Leaky Bucket
-      const leakyBucket = this.getLeakyBucket(transport);
-      await leakyBucket.clear(transport.alias);
-
-      const limit = await leakyBucket.calcLimit(transport.alias);
-      if (limit === 0) {
-        return;
-      }
-
-      // Processing
-      let queueItems = await this.storage.queueRepo.findForProcessing(transport.alias, limit);
-
-      this.eventEmitter.emit(QUEUE_BEFORE_PROCESSING, <IQueueProcessingEvent> {
-        transport: transport.alias,
-        items: queueItems,
-      });
-
-      if (queueItems.length > 0) {
-        queueItems = <IQueueEntity[]> (await Promise.all(queueItems.map(entity => this.process(entity)))).filter(entity => !!entity);
-      }
-
-      this.eventEmitter.emit(QUEUE_AFTER_PROCESSING, <IQueueProcessingEvent> {
-        transport: transport.alias,
-        items: queueItems,
-      });
-    });
-  }
-
-  /**
    * Creates a Notification and queues it or force sent it by certain transports
    */
-  async send(transportAlias: string | string[], originalData: ORIGINAL_DATA, force = false): Promise<IQueueEntity[]> {
-    if (!transportAlias.length) {
+  async send(data: Notification): Promise<INotificationQueueEntity[]> {
+    if (ObjectHelper.isEmpty(data.transports)) {
       return [];
     }
 
     const nextSend = new Date(Math.floor((new Date()).getTime() / 60000) * 60000);
 
-    return <IQueueEntity[]> (await Promise.all(
-      this.getTransports(transportAlias).map(async (transport: ITransport) => {
-        const transportData = await transport.dataProvider.originToTransport(originalData, originalData.transports?.[transport.alias]);
+    const transports = Array.isArray(data.transports) ? data.transports : Object.getOwnPropertyNames(data.transports);
 
-        const baseData: Partial<INotificationBase<PrimaryKey>> = {
+    return <INotificationQueueEntity[]> (await Promise.all(
+      transports.map(async (alias: string) => {
+        const transportData = await this.getTransport(alias).dataProvider
+          .prepareTransportData(data, ObjectHelper.value(data.transports, alias));
+
+        const baseData: Partial<INotificationBaseEntity<PK>> = {
           status: NotificationStatusEnum.NEW,
-          transport: transport.alias,
+          transport: alias,
           transportData,
         };
 
         const notification = (await this.storage.notificationRepo?.createEntity({
           ...baseData,
-          recipientId: typeof originalData.recipient === 'string' ? undefined : originalData.recipient.id,
-          senderId: originalData.sender?.id,
+          recipientId: typeof data.recipient === 'string' ? undefined : data.recipient?.id,
+          senderId: typeof data.sender === 'string' ? undefined : data.sender?.id,
         })) ?? null;
 
-        let queueEntity = await this.storage.queueRepo.createEntity({
+        const queueEntity = await this.storage.queueRepo.createEntity({
           ...baseData,
           notification,
-          nextSend: force ? null : nextSend,
-          inProcess: force,
+          nextSend: nextSend,
         });
         if (!queueEntity) {
-          console.error(`Can't insert notification (${transport.alias}) to queue:\n${JSON.stringify(originalData)}`);
+          console.error(`Can't insert notification (${alias}) to queue:\n${JSON.stringify(data)}`);
           return null;
         }
 
         this.eventEmitter.emit(NOTIFICATION_CREATED, <INotificationEvent> {
-          transport: transport.alias,
+          transport: alias,
           item: queueEntity,
         });
-
-        if (force) {
-          queueEntity = await this.process(queueEntity);
-        }
 
         return queueEntity;
       }),
@@ -194,20 +143,57 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
   }
 
   /**
+   * Process ITransport Queue
+   */
+  processQueue(...transports: string[]) {
+    if (!transports.length) {
+      transports = this.transportAliases;
+    }
+
+    transports.forEach(async alias => {
+      // Leaky Bucket
+      const leakyBucket = this.getTransportConfig<ILeakyBucketService>('leakyBucket', alias);
+      await leakyBucket.clear(alias);
+
+      const limit = await leakyBucket.calcLimit(alias);
+      if (limit === 0) {
+        return;
+      }
+
+      // Processing
+      let queueItems = await this.storage.queueRepo.findForProcessing(alias, limit);
+
+      this.eventEmitter.emit(QUEUE_BEFORE_PROCESSING, <IQueueProcessingEvent> {
+        transport: alias,
+        items: queueItems,
+      });
+
+      if (queueItems.length > 0) {
+        queueItems = <INotificationQueueEntity[]> (await Promise.all(queueItems.map(entity => this.process(entity)))).filter(entity => !!entity);
+      }
+
+      this.eventEmitter.emit(QUEUE_AFTER_PROCESSING, <IQueueProcessingEvent> {
+        transport: alias,
+        items: queueItems,
+      });
+    });
+  }
+
+  /**
    * Process a particular IQueueEntity
    */
-  async process(queueEntity: IQueueEntity): Promise<IQueueEntity | null> {
+  async process(queueEntity: INotificationQueueEntity): Promise<INotificationQueueEntity | null> {
     if (!queueEntity.inProcess || !PROCESSING_STATUSES.includes(queueEntity.status)) {
-      const allowedStatuses = PROCESSING_STATUSES.join("','");
       console.warn(`Unprocessed queue (#${queueEntity.id}), inProcess: ${queueEntity.inProcess}, status: '${queueEntity.status}'.\n`
-        + `Only statuses '${allowedStatuses}' with attribute inProcess = true can be processed.`);
+        + `Only statuses '${PROCESSING_STATUSES.join("','")}' with attribute inProcess = true can be processed.`);
+
       return null;
     }
     if (this.storage.notificationRepo && !queueEntity.notification) {
       throw new Error(`queue '${queueEntity.id}': Undefined property 'IQueueEntity::notification'.\nIt must be instance of INotificationEntity.`);
     }
 
-    let processed: IQueueEntity | null = null;
+    let processed: INotificationQueueEntity | null = null;
 
     try {
       const transport = this.getTransport(queueEntity.transport);
@@ -227,12 +213,13 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
 
       // Leaky Bucket
 
-      await this.getLeakyBucket(transport).store(processed);
+      const leakyBucket = this.getTransportConfig<ILeakyBucketService>('leakyBucket', transport);
+      await leakyBucket.store(processed);
 
       // Events
 
       this.eventEmitter.emit(NOTIFICATION_PROCESSED, <INotificationEvent> {
-        transport: transport.alias,
+        transport: queueEntity.transport,
         item: processed,
       });
 
@@ -244,7 +231,7 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
     return processed;
   }
 
-  protected async processResponse(queueEntity: IQueueEntity, response: IResponse): Promise<IQueueEntity> {
+  protected async processResponse(queueEntity: INotificationQueueEntity, response: IResponse): Promise<INotificationQueueEntity> {
     // Update Queue
 
     queueEntity.status = response.status;
@@ -258,8 +245,9 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
 
     if (NotificationStatusEnum.ERROR === response.status) {
       const transport = this.getTransport(queueEntity.transport);
+      const errorHandler = this.getTransportConfig<IErrorHandler>('errorHandler', transport);
 
-      queueEntity = await this.getErrorHandler(transport).handleError(queueEntity, transport, response);
+      queueEntity = await errorHandler.handleError(queueEntity, transport, response);
       if (!queueEntity.nextSend) {
         queueEntity.status = NotificationStatusEnum.FAILED;
       }
@@ -282,9 +270,9 @@ export class NotificationService<STORAGE extends IStorageService = IStorageServi
     return this.updateStorage(queueEntity);
   }
 
-  protected async updateStorage(queueEntity: IQueueEntity): Promise<IQueueEntity> {
+  protected async updateStorage(queueEntity: INotificationQueueEntity): Promise<INotificationQueueEntity> {
     if (!PROCESSING_STATUSES.includes(queueEntity.status)) {
-      this.storage.queueRepo.deleteByID(queueEntity.id).then();
+      this.storage.queueRepo.deleteById(queueEntity.id).then();
       return queueEntity;
     }
 

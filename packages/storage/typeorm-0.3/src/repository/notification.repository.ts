@@ -1,36 +1,34 @@
-import { INotificationEntity, INotificationRepository, IOptions, NotificationStatusEnum, PrimaryKey } from '@notifications-system/core';
+import { INotificationEntity, INotificationRepository, IOptions, NotificationStatusEnum } from '@node-notifications/core';
 import { In } from 'typeorm';
 import { FindWhere } from '../type';
 import { BaseRepository } from './base.repository';
 
-type Entity<USER_ID extends PrimaryKey> = INotificationEntity<string, USER_ID>;
+type Entity = INotificationEntity<number, string>;
 
-export class NotificationRepository<USER_ID extends PrimaryKey = PrimaryKey> extends BaseRepository<Entity<USER_ID>, string>
-  implements INotificationRepository<string, USER_ID> {
-
-  markAsRead(id: string): Promise<Entity<USER_ID> | null> {
+export class NotificationRepository extends BaseRepository<Entity> implements INotificationRepository<number, string> {
+  markAsRead(id: number): Promise<Entity | null> {
     return this.updateEntity({ id, status: NotificationStatusEnum.READ });
   }
 
-  findByRecipient(userId: USER_ID, filter?: FindWhere<Entity<USER_ID>>, options?: IOptions): Promise<Entity<USER_ID>[]> {
+  findByRecipient(userId: string, filter?: FindWhere<Entity>, options?: IOptions): Promise<Entity[]> {
     return this.find({
       where: { ...filter, recipientId: <any> userId },
       ...this.prepareFindManyOptions(options),
     });
   }
 
-  findBySender(userId: USER_ID, filter?: FindWhere<Entity<USER_ID>>, options?: IOptions): Promise<Entity<USER_ID>[]> {
+  findBySender(userId: string, filter?: FindWhere<Entity>, options?: IOptions): Promise<Entity[]> {
     return this.find({
       where: { ...filter, senderId: <any> userId },
       ...this.prepareFindManyOptions(options),
     });
   }
 
-  findByTransport(transport: string | string[], options?: IOptions): Promise<Entity<USER_ID>[]> {
+  findByTransport(transport: string | string[], options?: IOptions): Promise<Entity[]> {
     if (transport.length < 1) {
       throw new Error('Undefined transport');
     }
-    const where: FindWhere<Entity<USER_ID>> = {
+    const where: FindWhere<Entity> = {
       transport: typeof transport === 'string' ? transport : transport.length > 1 ? In(transport) : transport[0],
     };
 

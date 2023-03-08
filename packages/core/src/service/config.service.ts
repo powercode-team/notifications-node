@@ -8,7 +8,7 @@ export class ConfigService implements IConfigService {
   private readonly config: IConfig;
 
   constructor(config?: Partial<IConfig>) {
-    this.config = ObjectHelper.mergeDeep({
+    this.config = <IConfig> ObjectHelper.mergeDeep({
       eventEmitter: new EventEmitter(),
       errorHandler: new DummyErrorHandler(),
       leakyBucket: new DummyBucketService(),
@@ -16,7 +16,7 @@ export class ConfigService implements IConfigService {
     }, config || {});
   }
 
-  get<T extends any>(name: keyof IConfig, from?: IObject): T {
+  get<T>(name: keyof IConfig, from?: IObject): T {
     let value = from?.[`get${StringHelper.capitalize(name)}`] ?? from?.[name] ?? undefined;
     const defValue: T | undefined = <T> this.config[name] ?? undefined;
 

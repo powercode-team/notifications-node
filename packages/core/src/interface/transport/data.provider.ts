@@ -1,12 +1,12 @@
 import { IObject } from '../common';
-import { IOriginalData } from './original.data';
+import { INotification } from '../common/notification';
 
 /**
- * Transform data from ORIGINAL_DATA format to TRANSPORT_DATA format
+ * Prepare TRANSPORT_DATA format from INotification format
  */
-export interface IDataProvider<TRANSPORT_DATA extends IObject, ORIGINAL_DATA extends IOriginalData = IOriginalData> {
+export interface IDataProvider<TransportData extends IObject, Notification extends INotification = INotification> {
   /**
    * Prepare specific Transport Data from general Origin Data
    */
-  originToTransport(data: ORIGINAL_DATA, transportData?: Partial<TRANSPORT_DATA>): Promise<TRANSPORT_DATA>;
+  prepareTransportData(notification: Notification, transportData?: Partial<TransportData> | null): Promise<TransportData>;
 }

@@ -1,11 +1,11 @@
-import { BaseStorage, PrimaryKey } from '@notifications-system/core';
+import { BaseStorage } from '@node-notifications/core';
 import { DataSource } from 'typeorm';
 import { DataSourceOptions } from 'typeorm/data-source/DataSourceOptions';
-import { NotificationEntity, QueueEntity } from './entity';
-import { NotificationRepository, QueueRepository } from './repository';
+import { NotificationEntity, NotificationQueueEntity } from './entity';
+import { NotificationQueueRepository, NotificationRepository } from './repository';
 import { StorageOptions } from './type';
 
-export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseStorage<QueueRepository, NotificationRepository<USER_ID>> {
+export class TypeOrmStorage extends BaseStorage<NotificationQueueRepository, NotificationRepository> {
   protected _dataSource: DataSource | null = null;
 
   get dataSource() {
@@ -15,15 +15,15 @@ export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseSto
     return this._dataSource;
   }
 
-  async initialize(options: StorageOptions): Promise<TypeormStorage<USER_ID>> {
+  async initialize(options: StorageOptions): Promise<TypeOrmStorage> {
     this._dataSource = await this.dataSourceInstance(options);
 
     // Performs connection to the database.
     await this.dataSource.initialize();
 
     // Init Repositories
-    this._queueRepo = new QueueRepository(QueueEntity, this.dataSource.manager);
-    this._notificationRepo = new NotificationRepository<USER_ID>(NotificationEntity, this.dataSource.manager);
+    this._queueRepo = new NotificationQueueRepository(NotificationQueueEntity, this.dataSource.manager);
+    this._notificationRepo = new NotificationRepository(NotificationEntity, this.dataSource.manager);
 
     return this;
   }
@@ -42,7 +42,7 @@ export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseSto
     if (storageOptions.constructor.name === 'Object') {
       dataSource = new DataSource(<DataSourceOptions> {
         ...storageOptions,
-        entities: ['./node_modules/@notifications-system/storage-typeorm-0.3/lib/**/*.entity.js'],
+        entities: ['./node_modules/@node-notifications/storage-typeorm-0.3/**/*.entity.js'],
         synchronize: false,
       });
     } else {

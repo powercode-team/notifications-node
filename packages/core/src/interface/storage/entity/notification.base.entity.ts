@@ -1,11 +1,11 @@
-import { NotificationStatusEnum, PrimaryKey } from '../../../type';
+import { NotificationStatusEnum, PK } from '../../../type';
 import { IObject } from '../../common';
 import { IEntity } from './entity';
 
 /**
  * Notification Base Interface
  */
-export interface INotificationBase<ID extends PrimaryKey> extends IEntity<ID> {
+export interface INotificationBaseEntity<Id extends PK> extends IEntity<Id> {
   /** Notification status */
   status: NotificationStatusEnum;
 

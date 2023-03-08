@@ -1,16 +1,24 @@
-import { ILeakyBucketEntity, ILeakyBucketRepository, IOptions, IQueueEntity, IQueueRepository } from '../../../interface';
+import {
+  ILeakyBucketEntity,
+  ILeakyBucketRepository,
+  INotificationQueueEntity,
+  INotificationQueueRepository,
+  IOptions,
+} from '../../../interface';
 import { NotificationStatusEnum, PartialProps, PROCESSING_STATUSES } from '../../../type';
-import { QueueEntity } from '../entity';
+import { MemoryQueueEntity } from '../entity';
 import { MemoryBaseRepository } from './base.repository';
 
-type Entity = IQueueEntity<string>;
+type Entity = INotificationQueueEntity<string>;
 
-export class MemoryQueueRepository extends MemoryBaseRepository<Entity> implements IQueueRepository<string>, ILeakyBucketRepository {
-  entityClass = QueueEntity.name;
+export class MemoryQueueRepository extends MemoryBaseRepository<Entity> implements INotificationQueueRepository<string>, ILeakyBucketRepository {
+  entityClass = MemoryQueueEntity.name;
 
   instantiate(data?: Partial<Entity>): PartialProps<Entity, 'id'> {
-    const entity = new QueueEntity();
-    Object.assign(entity, data);
+    const entity = new MemoryQueueEntity();
+
+    const { id, ...params } = data ?? {};
+    Object.assign(entity, params);
 
     return entity;
   }
@@ -52,9 +60,7 @@ export class MemoryQueueRepository extends MemoryBaseRepository<Entity> implemen
       return Promise.resolve(null);
     }
 
-    // @ts-ignore
-    const { id, ...params } = data;
-    return this.createEntity(this.instantiate(params));
+    return this.createEntity(this.instantiate(data));
   }
 
   leakyBucketCount(transport: string, date: Date): Promise<number> {

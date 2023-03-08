@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MemoryStorage, NotificationQueueManager } from '@notifications-system/core';
-import { StorageOptions, TypeormStorage } from '@notifications-system/storage-typeorm-0.2';
-import { ISmtpTransportConfig, MailDataProvider, SmtpTransport } from '@notifications-system/transport-mailer';
+import { MemoryStorage, NotificationQueueManager } from '@node-notifications/core';
+import { StorageOptions, TypeOrmStorage } from '@node-notifications/storage-typeorm-0.2';
+import { ISmtpTransportConfig, MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@node-notifications/transport-mailer';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configDatabase, configTransportSmtp } from './config';
-import { InMemoryNotification } from './in-memory.notification';
-import { NotificationService } from './notification.service';
+import { InMemoryNotificationService } from './in-memory-notification.service';
+import { OrmNotificationService } from './orm-notification.service';
 
 @Module({
   imports: [
@@ -24,28 +24,28 @@ import { NotificationService } from './notification.service';
     ConfigService,
     AppService,
     {
-      // Sample NotificationService with Typeorm Storage for save Queue / History
-      provide: NotificationService,
+      // Sample NotificationService with InMemory Storage for save Queue / History
+      provide: InMemoryNotificationService,
       useFactory: async (configService: ConfigService) => {
-        return new NotificationService(
-          await new TypeormStorage().initialize(configService.get<StorageOptions>('database')),
-          [
-            new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
-          ],
+        return new InMemoryNotificationService(
+          await new MemoryStorage().initialize(600),
+          {
+            [TRANSPORT_SMTP]: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
+          },
           {},
         );
       },
       inject: [ConfigService],
     },
     {
-      // Sample NotificationService with InMemory Storage for save Queue / History
-      provide: InMemoryNotification,
+      // Sample NotificationService with Typeorm Storage for save Queue / History
+      provide: OrmNotificationService,
       useFactory: async (configService: ConfigService) => {
-        return new InMemoryNotification(
-          await new MemoryStorage().initialize(600),
-          [
-            new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
-          ],
+        return new OrmNotificationService(
+          await new TypeOrmStorage().initialize(configService.get<StorageOptions>('database')),
+          {
+            [TRANSPORT_SMTP]: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
+          },
           {},
         );
       },
@@ -56,7 +56,11 @@ import { NotificationService } from './notification.service';
 export class AppModule {
   private notificationQueueManager: NotificationQueueManager;
 
-  constructor(service: NotificationService) {
-    this.notificationQueueManager = new NotificationQueueManager(service).queueStart();
+  constructor(
+    inMemoryNotification: InMemoryNotificationService,
+    ormNotification: OrmNotificationService,
+  ) {
+    // this.notificationQueueManager = new NotificationQueueManager(inMemoryNotification).start();
+    this.notificationQueueManager = new NotificationQueueManager(ormNotification).start();
   }
 }

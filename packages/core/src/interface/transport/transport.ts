@@ -2,13 +2,14 @@ import { IObject, ITransportConfig } from '../common';
 import { IResponse } from '../response';
 import { IDataProvider } from './data.provider';
 
-/** Transport Interface */
-export interface ITransport<TRANSPORT_DATA extends IObject = IObject> {
-  /** Transport Alias */
-  alias: string;
+export type Transports = { [alias: string]: ITransport };
 
+export type TransportParams = { [alias: string]: IObject };
+
+/** Transport Interface */
+export interface ITransport<TransportData extends IObject = IObject> {
   /** Data Provider */
-  dataProvider: IDataProvider<TRANSPORT_DATA>;
+  dataProvider: IDataProvider<TransportData>;
 
   /**
    * Transport Config
@@ -18,7 +19,7 @@ export interface ITransport<TRANSPORT_DATA extends IObject = IObject> {
   /**
    * Send data
    */
-  send(data: TRANSPORT_DATA): Promise<IResponse>;
+  send(data: TransportData): Promise<IResponse>;
 
   /**
    * Check status

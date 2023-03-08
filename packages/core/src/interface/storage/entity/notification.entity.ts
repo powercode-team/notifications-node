@@ -1,15 +1,15 @@
-import { PrimaryKey } from '../../../type';
-import { INotificationBase } from './notification.base';
+import { PK } from '../../../type';
+import { INotificationBaseEntity } from './notification.base.entity';
 
 /**
  * Notification (history) Entity Interface
  */
-export interface INotificationEntity<ID extends PrimaryKey = PrimaryKey, USER_ID extends PrimaryKey = PrimaryKey>
-  extends INotificationBase<ID> {
-
+export interface INotificationEntity<Id extends PK = PK, UserId extends PK = PK> extends INotificationBaseEntity<Id> {
   /** Recipient ID */
-  recipientId?: USER_ID;
+  recipientType?: string;
+  recipientId?: UserId;
 
   /** Sender ID */
-  senderId?: USER_ID;
+  senderType?: string;
+  senderId?: UserId;
 }

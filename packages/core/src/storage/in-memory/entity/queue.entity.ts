@@ -1,7 +1,7 @@
-import { ILeakyBucketEntity, INotificationEntity, IQueueEntity } from '../../../interface';
-import { NotificationBase } from './notification.base';
+import { ILeakyBucketEntity, INotificationEntity, INotificationQueueEntity } from '../../../interface';
+import { MemoryNotificationBase } from './notification.base';
 
-export class QueueEntity extends NotificationBase implements IQueueEntity<string>, Omit<ILeakyBucketEntity, 'sentAt'> {
+export class MemoryQueueEntity extends MemoryNotificationBase implements INotificationQueueEntity<string>, Omit<ILeakyBucketEntity, 'sentAt'> {
   /** Related Notification */
   notification: INotificationEntity<string> | null;
 
@@ -9,5 +9,5 @@ export class QueueEntity extends NotificationBase implements IQueueEntity<string
   nextSend: Date | null = null;
 
   /** In processing */
-  inProcess: boolean;
+  inProcess: boolean = false;
 }

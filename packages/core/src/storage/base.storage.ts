@@ -1,15 +1,15 @@
-import { INotificationRepository, IQueueRepository, IStorageService } from '../interface';
+import { INotificationQueueRepository, INotificationRepository, INotificationStorageService } from '../interface';
 
-export abstract class BaseStorage<QUEUE_REPO extends IQueueRepository, NOTIFICATION_REPO extends INotificationRepository>
-  implements IStorageService {
+export abstract class BaseStorage<QueueRepo extends INotificationQueueRepository, NotificationRepo extends INotificationRepository>
+  implements INotificationStorageService {
 
-  protected _queueRepo: QUEUE_REPO | null = null;
-  protected _notificationRepo: NOTIFICATION_REPO | null = null;
+  protected _queueRepo: QueueRepo | null = null;
+  protected _notificationRepo: NotificationRepo | null = null;
 
   /**
    * Initialize Storage; Establish necessary connections; Prepare Repositories;
    */
-  abstract initialize(options?: any): Promise<BaseStorage<QUEUE_REPO, NOTIFICATION_REPO>>;
+  abstract initialize(options?: unknown): Promise<BaseStorage<QueueRepo, NotificationRepo>>;
 
   /**
    * Cleanup Storage; Close opened connections;
@@ -19,7 +19,7 @@ export abstract class BaseStorage<QUEUE_REPO extends IQueueRepository, NOTIFICAT
   /**
    * Queue Repository
    */
-  get queueRepo(): QUEUE_REPO {
+  get queueRepo(): QueueRepo {
     if (!this._queueRepo) {
       throw new Error(`Uninitialized ${this.constructor.name}. Please call ${this.constructor.name}::initialize()`);
     }
@@ -29,7 +29,7 @@ export abstract class BaseStorage<QUEUE_REPO extends IQueueRepository, NOTIFICAT
   /**
    * Notification (history) Repository
    */
-  get notificationRepo(): NOTIFICATION_REPO | null {
+  get notificationRepo(): NotificationRepo | null {
     return this._notificationRepo;
   }
 }

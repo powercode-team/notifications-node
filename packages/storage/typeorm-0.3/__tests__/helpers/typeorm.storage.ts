@@ -1,15 +1,15 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { createDatabase, dropDatabase } from 'typeorm-extension';
-import { StorageOptions, TypeormStorage } from '../..';
+import { StorageOptions, TypeOrmStorage } from '../..';
 
-export class TypeormStorageTest extends TypeormStorage {
+export class TypeormStorageTest extends TypeOrmStorage {
   async initialize(options: StorageOptions): Promise<TypeormStorageTest> {
     const dataSource = await this.dataSourceInstance(options);
 
     const dataSourceOptions = <DataSourceOptions> {
       ...dataSource.options,
       database: `${dataSource.options.database}_test_${(new Date()).getTime()}`,
-      migrations: ['./node_modules/@notifications-system/storage-typeorm-0.3/lib/migrations/*.js'],
+      migrations: ['./node_modules/@node-notifications/storage-typeorm-0.3/lib/migrations/*.js'],
       logging: false,
       synchronize: false,
     };

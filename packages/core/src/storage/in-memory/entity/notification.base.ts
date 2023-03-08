@@ -1,8 +1,8 @@
-import { INotificationBase, IObject } from '../../../interface';
+import { INotificationBaseEntity, IObject } from '../../../interface';
 import { NotificationStatusEnum } from '../../../type';
 import { BaseEntity } from './base.entity';
 
-export abstract class NotificationBase extends BaseEntity implements INotificationBase<string> {
+export abstract class MemoryNotificationBase extends BaseEntity implements INotificationBaseEntity<string> {
   /** Notification status */
   status: NotificationStatusEnum;
 

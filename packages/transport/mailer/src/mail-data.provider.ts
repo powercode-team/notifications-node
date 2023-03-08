@@ -1,25 +1,28 @@
-import { IDataProvider, IOriginalData } from '@notifications-system/core';
+import { IDataProvider, INotification } from '@node-notifications/core';
 import { IMailData } from './mail-data.interface';
 
 /**
- * Transform data from ORIGINAL_DATA format to TRANSPORT_DATA format
+ * Transform data from INotification format to IMailData format
  */
-export class MailDataProvider<ORIGINAL_DATA extends IOriginalData = IOriginalData> implements IDataProvider<IMailData, ORIGINAL_DATA> {
-  originToTransport(originalData: ORIGINAL_DATA, transportData?: Partial<IMailData>): Promise<IMailData> {
-    if (typeof originalData.recipient !== 'string' && !originalData.recipient?.email) {
-      throw new Error(`Undefined email for recipient ID: ${originalData.recipient.id}`);
+export class MailDataProvider<Notification extends INotification = INotification> implements IDataProvider<IMailData, Notification> {
+  prepareTransportData(notification: Notification, transportData?: Partial<IMailData> | null): Promise<IMailData> {
+    if (typeof notification.recipient !== 'string' && !notification.recipient?.email) {
+      throw new Error(`Undefined email for recipient: ${notification.recipient}`);
     }
 
     const mailerData: IMailData = {
-      to: typeof originalData.recipient === 'string'
-        ? originalData.recipient
-        : `${originalData.recipient.email} ${originalData.recipient.name}`,
-      subject: typeof originalData.payload === 'string' ? '' : originalData.payload.title,
-      html: typeof originalData.payload === 'string' ? originalData.payload : originalData.payload.body,
+      to: typeof notification.recipient === 'string'
+        ? <string> notification.recipient
+        : `${notification.recipient.email} ${notification.recipient.name}`,
+
+      subject: typeof notification.payload === 'string' ? undefined : notification.payload.subject,
+      html: typeof notification.payload === 'string' ? notification.payload : notification.payload.body,
     };
 
-    if (originalData.sender?.email) {
-      mailerData.from = `${originalData.sender.email} ${originalData.sender.name}`;
+    if (notification.sender) {
+      mailerData.from = typeof notification.sender === 'string'
+        ? <string> notification.recipient
+        : `${notification.sender.email} ${notification.sender.name}`;
     }
 
     return Promise.resolve({ ...mailerData, ...transportData });

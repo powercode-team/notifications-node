@@ -1,8 +1,8 @@
 {
-  "name": "@notifications-system/transport-mailer",
-  "version": "1.0.3",
+  "name": "@node-notifications/transport-mailer",
+  "version": "1.0.4",
   "license": "ISC",
-  "description": "Mail transport for Notifications System",
+  "description": "Mail transport for Notification System",
   "author": "and.xdev <and.xdev@gmail.com>",
   "homepage": "https://github.com/powercode-team/notifications-node/tree/main/packages/transport/mailer#readme",
   "repository": {
@@ -26,15 +26,16 @@
     "access": "public"
   },
   "scripts": {
-    "rimraf": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
+    "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
     "build": "tsc --build",
-    "rebuild": "npm run rimraf && npm run build",
+    "rebuild": "yarn clean && yarn build",
     "build-dev": "tsc --build && tsc --sourceMap --declarationMap",
-    "rebuild-dev": "npm run rimraf && npm run build-dev",
-    "test": "jest"
+    "rebuild-dev": "yarn clean && yarn build-dev",
+    "test": "jest",
+    "link": "yarn link"
   },
   "dependencies": {
-    "@notifications-system/core": "^1.0.3",
+    "@node-notifications/core": "^1.0.4",
     "@types/nodemailer": "^6.0",
     "nodemailer": "^6.0"
   }

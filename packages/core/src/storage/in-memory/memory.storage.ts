@@ -5,7 +5,7 @@ import { MemoryNotificationRepository, MemoryQueueRepository } from './repositor
 
 export class MemoryStorage extends BaseStorage<MemoryQueueRepository, MemoryNotificationRepository> {
   protected timer: NodeJS.Timer;
-  protected historyClearInterval: number = 30; // in seconds
+  protected historyClearInterval = 30; // in seconds
 
   async initialize(historyTTL?: number): Promise<MemoryStorage> {
     this._queueRepo = new MemoryQueueRepository();

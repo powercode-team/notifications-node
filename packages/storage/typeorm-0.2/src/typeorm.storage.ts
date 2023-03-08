@@ -1,9 +1,9 @@
-import { BaseStorage, PrimaryKey } from '@notifications-system/core';
+import { BaseStorage } from '@node-notifications/core';
 import { Connection, ConnectionOptions } from 'typeorm';
-import { NotificationRepository, QueueRepository } from './repository';
+import { NotificationQueueRepository, NotificationRepository } from './repository';
 import { StorageOptions } from './type';
 
-export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseStorage<QueueRepository, NotificationRepository<USER_ID>> {
+export class TypeOrmStorage extends BaseStorage<NotificationQueueRepository, NotificationRepository> {
   protected _connection: Connection | null = null;
 
   get connection(): Connection {
@@ -13,14 +13,14 @@ export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseSto
     return this._connection;
   }
 
-  async initialize(options: StorageOptions): Promise<TypeormStorage<USER_ID>> {
+  async initialize(options: StorageOptions): Promise<TypeOrmStorage> {
     this._connection = await this.connectionInstance(options);
 
     // Performs connection to the database.
     await this._connection.connect();
 
-    this._queueRepo = this._connection.getCustomRepository(QueueRepository);
-    this._notificationRepo = this._connection.getCustomRepository(NotificationRepository<USER_ID>);
+    this._queueRepo = this._connection.getCustomRepository(NotificationQueueRepository);
+    this._notificationRepo = this._connection.getCustomRepository(NotificationRepository);
 
     return this;
   }
@@ -39,7 +39,7 @@ export class TypeormStorage<USER_ID extends PrimaryKey = string> extends BaseSto
     if (storageOptions.constructor.name === 'Object') {
       connection = new Connection(<ConnectionOptions> {
         ...storageOptions,
-        entities: ['./node_modules/@notifications-system/storage-typeorm-0.2/lib/**/*.entity.js'],
+        entities: ['./node_modules/@node-notifications/storage-typeorm-0.2/**/*.entity.js'],
         synchronize: false,
       });
     } else {

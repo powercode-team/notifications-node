@@ -1,19 +1,19 @@
-# Notifications System TypeORM-v0.3 storage
+# Notification System TypeORM-v0.3 storage
 
 ## Description
 
-TypeORM v0.3 storage for [Notifications System](https://www.npmjs.com/package/@notifications-system/core)
+TypeORM v0.3 storage for [Notification System](https://www.npmjs.com/package/@node-notifications/core)
 
 ## Install
 
-> npm i @notifications-system/storage-typeorm-0.3
+> yarn add @node-notifications/storage-typeorm-0.3
 
 ## Migrations:
 
 - Copy migrations from library to project migrations directory
 
 ```
-cp ./node_modules/@notifications-system/storage-typeorm-0.3/migrations/*.js ./migrations/
+cp ./node_modules/@node-notifications/storage-typeorm-0.3/migrations/*.js ./migrations/
 ```
 
 - Run migrations
@@ -30,31 +30,39 @@ cp ./node_modules/@notifications-system/storage-typeorm-0.3/migrations/*.js ./mi
 
 ## TypeORM config:
 
-- [documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
+- [TypeORM documentation](https://typeorm.biunav.com/en/using-ormconfig.html#creating-a-new-connection-from-the-configuration-file)
 
-- [ormconfig](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.3/ormconfig.js)
+- [ormconfig sample](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.3/ormconfig.js)
 - [.env.dist](https://github.com/powercode-team/notifications-node/tree/main/packages/storage/typeorm-0.3/.env.dist)
 
 ## Sample usage:
 
 ```typescript
-import { ConsoleTransport, NotificationQueueManager, NotificationService, TRANSPORT_CONSOLE } from '@notifications-system/core';
-import { TypeormStorage } from '@notifications-system/storage-typeorm-0.3';
+import { ConsoleTransport, NotificationQueueManager, NotificationService, TRANSPORT_CONSOLE } from '@node-notifications/core';
+import { TypeormStorage } from '@node-notifications/storage-typeorm-0.3';
 
 let service: NotificationService;
+let queueManager: NotificationQueueManager;
 
 async function main() {
   // Instantiate Notification Service
   service = new NotificationService(
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     await new TypeormStorage().initialize(require('./ormconfig.js')),
-    [
-      new ConsoleTransport(), // Log all notification to console (for test/demo purpose)
-    ],
+    {
+      // Log all notification to console (for test/demo purpose)
+      [TRANSPORT_CONSOLE]: new ConsoleTransport(),
+    },
   );
-  new NotificationQueueManager(service).queueStart();
 
+  // Instantiate Notification Queue Manager and start Queue Processing
+  queueManager = new NotificationQueueManager(service).start();
+  // To stop Queue Processing:
+  // queueManager.stop();
 
-  // Sample usage
-  service.send(TRANSPORT_CONSOLE, { recipient: 'user@mail.test', payload: 'Test Notification' });
+  // ...
+
+  // Sample usage (data: INotification)
+  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: [TRANSPORT_CONSOLE] }).then();
 }
 ```

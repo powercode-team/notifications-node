@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 require('dotenv').config();
-const boolean = require('@notifications-system/core').boolean;
 
 module.exports = {
   type: process.env.DB_TYPE,
@@ -8,8 +8,8 @@ module.exports = {
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
-  logging: boolean(process.env.DB_LOGGING),
-  synchronize: boolean(process.env.DB_SYNC),
-  entities: ['./**/*.entity.{ts,js}'],
-  migrations: ['./migrations/*.js'],
+  logging: false,
+  synchronize: false,
+  entities: ['./node_modules/@node-notifications/storage-typeorm-0.2/lib/**/*.entity.js'],
+  migrations: ['./migrations/*.{ts,js}'],
 };

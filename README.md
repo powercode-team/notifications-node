@@ -1,12 +1,23 @@
-# `Notifications System`
+# Notification System
 
 ## Description
 
-Queued asynchronous notifications system
+### Notification System for Node.js
 
-## Packages
+#### Features:
 
-### [Notifications Core](./packages/core/README.md)
+- queue
+- history
+- error processing
+- leaky bucket
+
+## Install
+
+> yarn add @node-notifications/core
+
+## Documentation
+
+- [Notifications Core](./packages/core/README.md)
 
 ### Transports
 
@@ -16,35 +27,3 @@ Queued asynchronous notifications system
 
 - [TypeORM v0.2](./packages/storage/typeorm-0.2/README.md)
 - [TypeORM v0.3](./packages/storage/typeorm-0.3/README.md)
-
-## Development
-
-### Prepare
-
-- `npm ci`
-- `lerna link`
-- `lerna bootstrap`
-
-### Build for Development
-
-- `lerna run rebuild-dev`
-
-### Build for Production / NPM Publish
-
-- `lerna run rebuild`
-
-### NPM Publish
-
-- `lerna run rebuild && lerna publish --force-publish`
-
-## Nest Demo project
-
-- `cd nest.sample`
-- `cp .env.dist .env`
-- `npm ci`
-- `npm run rebuild`
-- Start demo container: `docker-compose -f ../docker/docker-compose.yml up -d`
-- Run migrations: `./node_modules/.bin/typeorm migration:run`
-- [Open demo](http://localhost:3000/mail) and <b>Send test email</b>
-- [See sent emails](http://localhost:58025/)
-- Stop demo container: `docker-compose -f ../docker/docker-compose.yml down`
