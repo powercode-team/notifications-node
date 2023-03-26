@@ -14,8 +14,11 @@ export class ObjectHelper {
     return Array.isArray(object) ? null : object[key];
   }
 
-  static assignDeep(target: IObject, ...sources: IObject[]): IObject {
-    return sources.reduce((result: IObject, source: IObject) => {
+  /**
+   * Recursive assign properties from sources to target and return modified target
+   */
+  static assignDeep<T extends IObject, K extends IObject>(target: T, ...sources: K[]): T {
+    return sources.reduce((result: T, source: K) => {
       if (!source) {
         return result;
       }
@@ -27,21 +30,24 @@ export class ObjectHelper {
         if (Array.isArray(res) && Array.isArray(src)) {
           // @ts-ignore
           result[key] = res.concat(...src);
-        } else if (this.isObject(res) && this.isObject(src)) {
+        } else if (this.isObject(res) && this.isObject(src) && res.constructor.name === src.constructor.name) {
           // @ts-ignore
           result[key] = this.assignDeep(res, src);
-        } else if (typeof src !== 'undefined' || typeof res === 'undefined') {
+        } else if (typeof res === 'undefined' || typeof src !== 'undefined') {
           // @ts-ignore
           result[key] = src;
         }
       });
 
       return result;
-    }, target ?? <IObject> {});
+    }, target ?? <T> Object.create(Object.getPrototypeOf(target)));
   }
 
-  static mergeDeep(base: IObject | null, ...sources: IObject[]): IObject {
-    return sources.reduce((result: IObject, source: IObject) => {
+  /**
+   * Recursive merge properties from sources with base and return new result object
+   */
+  static mergeDeep<T extends IObject>(base: T | null, ...sources: IObject[]): T {
+    return sources.reduce((result: T, source: IObject) => {
       if (!source) {
         return result;
       }
@@ -53,7 +59,7 @@ export class ObjectHelper {
         if (Array.isArray(res) && Array.isArray(src)) {
           // @ts-ignore
           result[key] = res.concat(...src);
-        } else if (this.isObject(res) && this.isObject(src)) {
+        } else if (this.isObject(res) && this.isObject(src) && res.constructor.name === src.constructor.name) {
           // @ts-ignore
           result[key] = this.mergeDeep(res, src);
         } else if (typeof res === 'undefined' || typeof src !== 'undefined') {
@@ -63,6 +69,6 @@ export class ObjectHelper {
       });
 
       return result;
-    }, <IObject> { ...base });
+    }, <T> Object.assign(Object.create(Object.getPrototypeOf(base)), base));
   }
 }

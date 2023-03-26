@@ -1,7 +1,7 @@
-import { ILeakyBucketEntity, INotificationEntity, INotificationQueueEntity } from '../../../interface';
+import { INotificationEntity, INotificationQueueEntity } from '../../../interface';
 import { MemoryNotificationBase } from './notification.base';
 
-export class MemoryQueueEntity extends MemoryNotificationBase implements INotificationQueueEntity<string>, Omit<ILeakyBucketEntity, 'sentAt'> {
+export class MemoryQueueEntity extends MemoryNotificationBase implements INotificationQueueEntity<string> {
   /** Related Notification */
   notification: INotificationEntity<string> | null;
 

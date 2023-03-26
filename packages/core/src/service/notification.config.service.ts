@@ -1,14 +1,14 @@
 import EventEmitter from 'events';
 import { ObjectHelper, StringHelper } from '../helper';
-import { IConfig, IConfigService, IObject } from '../interface';
+import { INotificationConfig, INotificationConfigService, IObject } from '../interface';
 import { DummyErrorHandler } from './error-handler';
 import { DummyBucketService } from './leaky-bucket';
 
-export class ConfigService implements IConfigService {
-  private readonly config: IConfig;
+export class NotificationConfigService implements INotificationConfigService {
+  private readonly config: INotificationConfig;
 
-  constructor(config?: Partial<IConfig>) {
-    this.config = <IConfig> ObjectHelper.mergeDeep({
+  constructor(config?: Partial<INotificationConfig>) {
+    this.config = <INotificationConfig> ObjectHelper.mergeDeep({
       eventEmitter: new EventEmitter(),
       errorHandler: new DummyErrorHandler(),
       leakyBucket: new DummyBucketService(),
@@ -16,7 +16,7 @@ export class ConfigService implements IConfigService {
     }, config || {});
   }
 
-  get<T>(name: keyof IConfig, from?: IObject): T {
+  get<T>(name: keyof INotificationConfig, from?: IObject): T {
     let value = from?.[`get${StringHelper.capitalize(name)}`] ?? from?.[name] ?? undefined;
     const defValue: T | undefined = <T> this.config[name] ?? undefined;
 

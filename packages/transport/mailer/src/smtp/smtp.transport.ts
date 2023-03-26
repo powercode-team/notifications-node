@@ -4,8 +4,6 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { IMailData } from '../mail-data.interface';
 import { ISmtpTransportConfig } from './smtp.interface';
 
-export const TRANSPORT_SMTP = 'smtp';
-
 export class SmtpTransport extends AbstractTransport<IMailData> {
   protected transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
 

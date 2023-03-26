@@ -2,8 +2,8 @@ import { Connection, ConnectionOptions } from 'typeorm';
 import { createDatabase, dropDatabase } from 'typeorm-extension';
 import { StorageOptions, TypeOrmStorage } from '../..';
 
-export class TypeormStorageTest extends TypeOrmStorage<number, string> {
-  async initialize(options: StorageOptions): Promise<TypeormStorageTest> {
+export class TypeOrmStorageTest extends TypeOrmStorage {
+  async initialize(options: StorageOptions): Promise<TypeOrmStorageTest> {
     const connection = await this.connectionInstance(options);
 
     const connectionOptions = <ConnectionOptions> {

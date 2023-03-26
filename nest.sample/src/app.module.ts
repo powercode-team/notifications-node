@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MemoryStorage, NotificationQueueManager } from '@node-notifications/core';
 import { StorageOptions, TypeOrmStorage } from '@node-notifications/storage-typeorm-0.2';
-import { ISmtpTransportConfig, MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@node-notifications/transport-mailer';
+import { ISmtpTransportConfig, MailDataProvider, SmtpTransport } from '@node-notifications/transport-mailer';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configDatabase, configTransportSmtp } from './config';
@@ -30,7 +30,7 @@ import { OrmNotificationService } from './orm-notification.service';
         return new InMemoryNotificationService(
           await new MemoryStorage().initialize(600),
           {
-            [TRANSPORT_SMTP]: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
+            smtp: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
           },
           {},
         );
@@ -44,7 +44,7 @@ import { OrmNotificationService } from './orm-notification.service';
         return new OrmNotificationService(
           await new TypeOrmStorage().initialize(configService.get<StorageOptions>('database')),
           {
-            [TRANSPORT_SMTP]: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
+            smtp: new SmtpTransport(configService.get<ISmtpTransportConfig>('transport.smtp'), new MailDataProvider()),
           },
           {},
         );

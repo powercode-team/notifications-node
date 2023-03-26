@@ -21,7 +21,7 @@ TypeORM v0.2 storage for [Notification System](https://www.npmjs.com/package/@no
 ## Sample usage:
 
 ```typescript
-import { ConsoleTransport, NotificationQueueManager, NotificationService, TRANSPORT_CONSOLE } from '@node-notifications/core';
+import { ConsoleTransport, NotificationQueueManager, NotificationService } from '@node-notifications/core';
 import { TypeormStorage } from '@node-notifications/storage-typeorm-0.2';
 
 let service: NotificationService;
@@ -34,7 +34,7 @@ async function main() {
     await new TypeormStorage().initialize(require('./ormconfig.js')),
     {
       // Log all notification to console (for test/demo purpose)
-      [TRANSPORT_CONSOLE]: new ConsoleTransport(),
+      console: new ConsoleTransport(),
     },
   );
 
@@ -46,6 +46,6 @@ async function main() {
   // ...
 
   // Sample usage (data: INotification)
-  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: [TRANSPORT_CONSOLE] }).then();
+  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: ['console'] }).then();
 }
 ```

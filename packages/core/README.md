@@ -29,7 +29,7 @@ The Core module provide basic notifications/queue logic and interfaces:
 
 ```typescript
 // Internal configuration:
-<IConfig> {
+<INotificationConfig> {
   eventEmitter: new EventEmitter(),
   errorHandler: new DummyErrorHandler(),
   leakyBucket: new DummyBucketService(),
@@ -54,7 +54,6 @@ import {
   NotificationService,
   QUEUE_BEFORE_PROCESSING,
   ResendErrorHandler,
-  TRANSPORT_CONSOLE,
 } from '@node-notifications/core';
 import { randomInt, randomUUID } from 'crypto';
 
@@ -64,36 +63,36 @@ let queueManager: NotificationQueueManager;
 async function main() {
   // Instantiate Notification Service
   service = new NotificationService(
-          // In-Memory StorageService (INotificationStorageService implementation)
-          await new MemoryStorage().initialize(),
-          // All necessary ITransport instances for current project
-          {
-            [TRANSPORT_CONSOLE]: new ConsoleTransport(),
-            // ...,
-            // 'transport_XXXX': new TransportXXXX(),
-          },
-          // optionally change default configuration
-          // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
-          {
-            // ResendErrorHandler with GeometryProgressionStrategy for "error processing"
-            // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
-            // Sample: 10, 20, 40, 80, 160, ... 3600, 3600, ... | max to 20 times or success response
-            errorHandler: new ResendErrorHandler(new GeometryProgressionStrategy(20, 10, 3600)),
+    // In-Memory StorageService (INotificationStorageService implementation)
+    await new MemoryStorage().initialize(),
+    // All necessary ITransport instances for current project
+    {
+      console: new ConsoleTransport(),
+      // ...,
+      // alias_xxxx: new TransportXXXX(),
+    },
+    // optionally change default configuration
+    // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
+    {
+      // ResendErrorHandler with GeometryProgressionStrategy for "error processing"
+      // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
+      // Sample: 10, 20, 40, 80, 160, ... 3600, 3600, ... | max to 20 times or success response
+      errorHandler: new ResendErrorHandler(new GeometryProgressionStrategy(20, 10, 3600)),
 
-            // ILeakyBucketService
-            // For example send max 10 messages for each transports by one try
-            leakyBucket: new LeakyBucketService(10),
-            // Or max 8 messages for each transports in 15 sec
-            // leakyBucket: new LeakyBucketService(8, 15),
+      // ILeakyBucketService
+      // For example send max 10 messages for each transports by one try
+      leakyBucket: new LeakyBucketService(10),
+      // Or max 8 messages for each transports in 15 sec
+      // leakyBucket: new LeakyBucketService(8, 15),
 
-            // Override processing interval (default: 3 sec)
-            processingInterval: 5, // sec
-          },
+      // Override processing interval (default: 3 sec)
+      processingInterval: 5, // sec
+    },
   );
 
   // Sample Notification subscriber
   service.eventEmitter.on(QUEUE_BEFORE_PROCESSING, (event: IQueueProcessingEvent) => {
-    console.info(`process ${event.items.length} at ${(new Date()).toLocaleTimeString()}:`);
+    console.info(`before processing ${event.items.length} at ${(new Date()).toLocaleTimeString()}:`);
   });
 
   // Instantiate Notification Queue Manager and start Queue Processing
@@ -126,8 +125,8 @@ async function main() {
   // const payload = 'Hello from Notification System!!';
 
   // Find transport aliases for certain purpose (from database or configuration or define manually)
-  // array: [TRANSPORT_CONSOLE, TRANSPORT_SMTP, TRANSPORT_XXXX];
-  const transports = [TRANSPORT_CONSOLE];
+  // array: ['console', 'smtp', 'alias_xxxx'];
+  const transports = ['console'];
 
   // Sample usage (data: INotification)
   service.send({ recipient, payload, transports }).then();

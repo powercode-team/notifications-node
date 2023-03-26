@@ -2,8 +2,6 @@ import { randomInt } from 'crypto';
 import { AbstractTransport, ConsoleDataProvider, IConsoleData, IResponse, NotificationStatusEnum } from '../..';
 import { sleep } from './sleep';
 
-export const TRANSPORT_CONSOLE_TEST = 'console.test';
-
 export class ConsoleTransportTest extends AbstractTransport<IConsoleData> {
   constructor(
     protected readonly errorPercentage: number = 50,
@@ -31,7 +29,7 @@ export class ConsoleTransportTest extends AbstractTransport<IConsoleData> {
 
     await sleep(randomInt(this.delay.min, this.delay.max) * 1000);
 
-    console.log(`Notification to: ${data.to}, Status: ${success}\n Data: ${data.text}`);
+    console.log(`Send to: ${data.to}, Result: ${success}\n Data: ${data.text}`);
 
     return Promise.resolve({
       status: success ? NotificationStatusEnum.SENT : NotificationStatusEnum.ERROR,

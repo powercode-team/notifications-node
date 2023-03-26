@@ -66,7 +66,6 @@ export class MemoryDriver {
     let ind: number;
     let count: number = 0;
 
-    // @ts-ignore
     if (filter == null) {
       count = this.get(type).length;
       this.init(type);
@@ -82,8 +81,7 @@ export class MemoryDriver {
   }
 
   static count<T extends IObject>(type: string, filter?: Filter<T>): number {
-    // @ts-ignore
-    return filter == null ? this.get(type).length : this.get(type).filter(filter).length;
+    return filter == null ? this.get(type).length : this.get(type).filter(<any> filter).length;
   }
 
   static collect<T extends IObject>(collection: T[], options?: IOptions): T[] {

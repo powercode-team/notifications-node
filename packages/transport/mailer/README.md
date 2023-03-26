@@ -12,7 +12,7 @@ Nodemailer transport for [Notification System](https://www.npmjs.com/package/@no
 
 ```typescript
 import { MemoryStorage, NotificationQueueManager, NotificationService } from '@node-notifications/core';
-import { MailDataProvider, SmtpTransport, TRANSPORT_SMTP } from '@node-notifications/transport-mailer';
+import { MailDataProvider, SmtpTransport } from '@node-notifications/transport-mailer';
 
 let service: NotificationService;
 let queueManager: NotificationQueueManager;
@@ -22,7 +22,7 @@ async function main() {
   service = new NotificationService(
     await new MemoryStorage().initialize(),
     {
-      [TRANSPORT_SMTP]: new SmtpTransport({
+      smtp: new SmtpTransport({
         options: {
           host: process.env.MAIL_HOST,
           port: Number(process.env.MAIL_PORT) || undefined,
@@ -45,6 +45,6 @@ async function main() {
   // ...
 
   // Sample usage (data: INotification)
-  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: [TRANSPORT_SMTP] }).then();
+  service.send({ recipient: 'user@mail.test', payload: 'Test Notification', transports: ['smtp'] }).then();
 }
 ```

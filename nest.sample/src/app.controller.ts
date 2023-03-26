@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Redirect, Render } from '@nestjs/common';
-import { TRANSPORT_SMTP } from '@node-notifications/transport-mailer';
+import { randomUUID } from 'crypto';
 import { AppService } from './app.service';
 import { MailDto } from './dto/mail.dto';
 import { OrmNotificationService } from './orm-notification.service';
@@ -21,8 +21,8 @@ export class AppController {
   @Render('mail')
   async getNotification() {
     return {
-      'queue': await this.notification.findQueueByTransport(TRANSPORT_SMTP),
-      'notifications': await this.notification.findByTransport(TRANSPORT_SMTP, {
+      'queue': await this.notification.findQueueByTransport('smtp'),
+      'notifications': await this.notification.findByTransport('smtp', {
         order: { sentAt: 'DESC', createdAt: 'DESC' },
         limit: 3,
       }),
@@ -32,6 +32,10 @@ export class AppController {
   @Post('mail/send')
   @Redirect('/mail', 301)
   async sendEmail(@Body() dto: MailDto) {
-    await this.notification.send({ recipient: dto.email, payload: dto.message, transports: [TRANSPORT_SMTP] });
+    await this.notification.send({
+      recipient: { id: randomUUID(), name: 'User Name', email: dto.email },
+      payload: dto.message,
+      transports: ['smtp'],
+    });
   }
 }

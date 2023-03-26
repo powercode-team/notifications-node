@@ -2,8 +2,8 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { createDatabase, dropDatabase } from 'typeorm-extension';
 import { StorageOptions, TypeOrmStorage } from '../..';
 
-export class TypeormStorageTest extends TypeOrmStorage {
-  async initialize(options: StorageOptions): Promise<TypeormStorageTest> {
+export class TypeOrmStorageTest extends TypeOrmStorage {
+  async initialize(options: StorageOptions): Promise<TypeOrmStorageTest> {
     const dataSource = await this.dataSourceInstance(options);
 
     const dataSourceOptions = <DataSourceOptions> {
