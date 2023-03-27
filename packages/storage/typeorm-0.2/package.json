@@ -1,6 +1,6 @@
 {
   "name": "@node-notifications/storage-typeorm-0.2",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "license": "ISC",
   "description": "TypeORM storage for Notification System",
   "author": "and.xdev <and.xdev@gmail.com>",
@@ -35,7 +35,7 @@
     "link": "yarn link"
   },
   "dependencies": {
-    "@node-notifications/core": "^2.1.4"
+    "@node-notifications/core": "^2.1.5"
   },
   "devDependencies": {
     "typeorm": "~0.2.45",
