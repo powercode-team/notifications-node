@@ -10,6 +10,5 @@ module.exports = {
   password: process.env.DB_PASS,
   logging: false,
   synchronize: false,
-  entities: ['./node_modules/@node-notifications/storage-typeorm-0.2/lib/**/*.entity.js'],
-  migrations: ['./migrations/*.{ts,js}'],
+  migrations: ['./node_modules/@node-notifications/storage-typeorm-0.2/**/migrations/*.js'],
 };

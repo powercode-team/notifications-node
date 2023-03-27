@@ -1,4 +1,4 @@
-import { BaseStorage } from '@node-notifications/core';
+import { BaseStorage, ObjectHelper } from '@node-notifications/core';
 import { Connection, ConnectionOptions } from 'typeorm';
 import { NotificationQueueRepository, NotificationRepository } from './repository';
 import { StorageOptions } from './type';
@@ -36,12 +36,14 @@ export class TypeOrmStorage extends BaseStorage<NotificationQueueRepository, Not
   protected connectionInstance(storageOptions: StorageOptions): Promise<Connection> {
     let connection: Connection;
 
-    if (storageOptions.constructor.name === 'Object') {
-      connection = new Connection(<ConnectionOptions> {
-        ...storageOptions,
-        entities: ['./node_modules/@node-notifications/storage-typeorm-0.2/**/*.entity.js'],
-        synchronize: false,
-      });
+    if (ObjectHelper.isObject(storageOptions, true)) {
+      connection = new Connection(<ConnectionOptions> ObjectHelper.mergeDeep(
+        storageOptions,
+        {
+          entities: [__dirname + '/entity/*.{ts,js}'],
+          synchronize: false,
+        },
+      ));
     } else {
       connection = <Connection> storageOptions;
     }

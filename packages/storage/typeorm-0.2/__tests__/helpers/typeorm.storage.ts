@@ -9,7 +9,7 @@ export class TypeOrmStorageTest extends TypeOrmStorage {
     const connectionOptions = <ConnectionOptions> {
       ...connection.options,
       database: `${connection.options.database}_test_${(new Date()).getTime()}`,
-      migrations: ['./node_modules/@node-notifications/storage-typeorm-0.2/lib/migrations/*.js'],
+      migrations: ['./node_modules/@node-notifications/storage-typeorm-0.2/**/migrations/*.js'],
       logging: false,
       synchronize: false,
     };

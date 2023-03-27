@@ -1,4 +1,4 @@
-import { BaseStorage } from '@node-notifications/core';
+import { BaseStorage, ObjectHelper } from '@node-notifications/core';
 import { DataSource } from 'typeorm';
 import { DataSourceOptions } from 'typeorm/data-source/DataSourceOptions';
 import { NotificationEntity, NotificationQueueEntity } from './entity';
@@ -40,11 +40,13 @@ export class TypeOrmStorage extends BaseStorage<NotificationQueueRepository, Not
     let dataSource: DataSource;
 
     if (storageOptions.constructor.name === 'Object') {
-      dataSource = new DataSource(<DataSourceOptions> {
-        ...storageOptions,
-        entities: ['./node_modules/@node-notifications/storage-typeorm-0.3/**/*.entity.js'],
-        synchronize: false,
-      });
+      dataSource = new DataSource(<DataSourceOptions> ObjectHelper.mergeDeep(
+        storageOptions,
+        {
+          entities: [__dirname + '/entity/*.{ts,js}'],
+          synchronize: false,
+        },
+      ));
     } else {
       dataSource = <DataSource> storageOptions;
     }
