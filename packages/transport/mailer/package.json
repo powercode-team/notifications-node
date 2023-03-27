@@ -1,6 +1,6 @@
 {
   "name": "@node-notifications/transport-mailer",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "license": "ISC",
   "description": "Mail transport for Notification System",
   "author": "and.xdev <and.xdev@gmail.com>",
@@ -35,7 +35,7 @@
     "link": "yarn link"
   },
   "dependencies": {
-    "@node-notifications/core": "^2.1.2",
+    "@node-notifications/core": "^2.1.3",
     "@types/nodemailer": "^6.0",
     "nodemailer": "^6.0"
   },
