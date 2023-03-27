@@ -13,7 +13,7 @@ export class MailDataProvider<Notification extends INotification = INotification
     const mailerData: IMailData = {
       to: typeof notification.recipient === 'string'
         ? <string> notification.recipient
-        : `${notification.recipient.email} ${notification.recipient.name}`,
+        : `${notification.recipient.email} ${notification.recipient.name ?? ''}`,
 
       subject: typeof notification.payload === 'string' ? undefined : notification.payload.subject,
       html: typeof notification.payload === 'string' ? notification.payload : notification.payload.body,
@@ -22,7 +22,7 @@ export class MailDataProvider<Notification extends INotification = INotification
     if (notification.sender) {
       mailerData.from = typeof notification.sender === 'string'
         ? <string> notification.recipient
-        : `${notification.sender.email} ${notification.sender.name}`;
+        : `${notification.sender.email} ${notification.sender.name ?? ''}`;
     }
 
     return Promise.resolve({ ...mailerData, ...transportData });
