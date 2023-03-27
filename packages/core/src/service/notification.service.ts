@@ -9,7 +9,7 @@ import {
   INotificationConfigService,
   INotificationEntity,
   INotificationQueueEntity,
-  INotificationStorageService,
+  INotificationStorage,
   IResponse,
   ITransport,
   Transports,
@@ -25,7 +25,10 @@ import {
 } from '../type';
 import { NotificationConfigService } from './notification.config.service';
 
-export class NotificationService<Storage extends INotificationStorageService = INotificationStorageService, Notification extends INotification = INotification> {
+export class NotificationService<
+  Storage extends INotificationStorage = INotificationStorage,
+  Notification extends INotification = INotification
+> {
   protected readonly _storage: Storage;
   protected readonly _transports: Transports;
   protected readonly _config: INotificationConfigService;

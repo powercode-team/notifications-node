@@ -1,6 +1,6 @@
 import { INotificationQueueRepository, INotificationRepository } from '../storage';
 
-export interface INotificationStorageService {
+export interface INotificationStorage {
   /**
    * Queue Repository
    */

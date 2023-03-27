@@ -1,6 +1,7 @@
-import { IObject, ITransportConfig } from '../common';
+import { IObject } from '../common';
 import { IResponse } from '../response';
 import { IDataProvider } from './data.provider';
+import { ITransportConfig } from './transport.config';
 
 export type Transports = { [alias: string]: ITransport };
 

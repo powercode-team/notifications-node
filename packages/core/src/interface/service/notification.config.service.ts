@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
-import { IObject, ITransportConfig } from '../common';
+import { IObject } from '../common';
+import { ITransportConfig } from '../transport';
 
 export interface INotificationConfig extends Required<ITransportConfig> {
   eventEmitter: EventEmitter;

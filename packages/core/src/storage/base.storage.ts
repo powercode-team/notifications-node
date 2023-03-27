@@ -1,7 +1,7 @@
-import { INotificationQueueRepository, INotificationRepository, INotificationStorageService } from '../interface';
+import { INotificationQueueRepository, INotificationRepository, INotificationStorage } from '../interface';
 
 export abstract class BaseStorage<QueueRepo extends INotificationQueueRepository, NotificationRepo extends INotificationRepository>
-  implements INotificationStorageService {
+  implements INotificationStorage {
 
   protected _queueRepo: QueueRepo | null = null;
   protected _notificationRepo: NotificationRepo | null = null;

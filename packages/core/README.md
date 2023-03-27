@@ -63,7 +63,7 @@ let queueManager: NotificationQueueManager;
 async function main() {
   // Instantiate Notification Service
   service = new NotificationService(
-    // In-Memory StorageService (INotificationStorageService implementation)
+    // In-Memory StorageService (INotificationStorage implementation)
     await new MemoryStorage().initialize(),
     // All necessary ITransport instances for current project
     {
