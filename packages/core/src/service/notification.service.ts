@@ -142,8 +142,10 @@ export class NotificationService<
 
         const notification = (await this.storage.notificationRepo?.createEntity({
           ...baseData,
-          recipientId: typeof data.recipient === 'string' ? undefined : data.recipient?.id,
-          senderId: typeof data.sender === 'string' ? undefined : data.sender?.id,
+          recipientId: typeof data.recipient !== 'string' ? data.recipient?.id : undefined,
+          recipientType: typeof data.recipient !== 'string' ? data.recipient?.type : undefined,
+          senderId: typeof data.sender !== 'string' ? data.sender?.id : undefined,
+          senderType: typeof data.sender !== 'string' ? data.sender?.type : undefined,
         })) ?? null;
 
         const queueEntity = await this.storage.queueRepo.createEntity({

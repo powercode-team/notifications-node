@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+require('dotenv').config();
 import { ISmtpTransportConfig } from '@node-notifications/transport-mailer';
 
 export const configSmtp: ISmtpTransportConfig = {
