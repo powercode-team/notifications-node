@@ -2,8 +2,8 @@
 import { IObject } from '../interface';
 
 export class ObjectHelper {
-  static isObject(object: unknown): boolean {
-    return null != object && typeof object === 'object';
+  static isObject(object: unknown, strictly: boolean = false): boolean {
+    return null != object && typeof object === 'object' && (!strictly || object.constructor.name === 'Object');
   }
 
   static isEmpty(object: IObject | Array<unknown>): boolean {

@@ -8,7 +8,7 @@ export class NotificationConfigService implements INotificationConfigService {
   private readonly config: INotificationConfig;
 
   constructor(config?: Partial<INotificationConfig>) {
-    this.config = <INotificationConfig> ObjectHelper.mergeDeep({
+    this.config = <INotificationConfig> ObjectHelper.assignDeep({
       eventEmitter: new EventEmitter(),
       errorHandler: new DummyErrorHandler(),
       leakyBucket: new DummyBucketService(),

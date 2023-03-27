@@ -12,7 +12,7 @@ import {
   INotificationStorage,
   IResponse,
   ITransport,
-  Transports,
+  ITransportCollection,
 } from '../interface';
 import { INotificationEvent } from '../interface/event/notification.event';
 import {
@@ -29,52 +29,73 @@ export class NotificationService<
   Storage extends INotificationStorage = INotificationStorage,
   Notification extends INotification = INotification
 > {
-  protected readonly _storage: Storage;
-  protected readonly _transports: Transports;
-  protected readonly _config: INotificationConfigService;
-  protected readonly _eventEmitter: EventEmitter;
+  #storage?: Storage;
+  #transports?: ITransportCollection;
+  #config: INotificationConfigService;
+  #eventEmitter: EventEmitter;
 
   constructor(
-    storage: Storage,
-    transports: Transports,
-    defaultConfig: Partial<INotificationConfig> | INotificationConfigService = new NotificationConfigService(),
+    storage?: Storage,
+    transports?: ITransportCollection,
+    defaultConfig?: Partial<INotificationConfig> | INotificationConfigService,
   ) {
-    if (ObjectHelper.isEmpty(transports)) {
-      throw new Error('Undefined transports');
+    this.config = defaultConfig;
+
+    if (storage) {
+      this.storage = storage;
     }
-
-    this._storage = storage;
-    this._transports = transports;
-
-    this._config = ObjectHelper.isObject(defaultConfig)
-      ? new NotificationConfigService(<Partial<INotificationConfig>> defaultConfig)
-      : <INotificationConfigService> defaultConfig;
-
-    this._eventEmitter = this._config.get('eventEmitter');
-  }
-
-  get storage(): Storage {
-    return this._storage;
-  }
-
-  get transports(): ITransport[] {
-    return Object.values(this._transports);
-  }
-
-  get transportAliases(): string[] {
-    return Object.getOwnPropertyNames(this._transports);
-  }
-
-  get config(): INotificationConfigService {
-    return this._config;
+    if (transports) {
+      this.transports = transports;
+    }
   }
 
   get eventEmitter(): EventEmitter {
-    return this._eventEmitter;
+    return this.#eventEmitter;
+  }
+
+  set config(config: Partial<INotificationConfig> | INotificationConfigService | undefined) {
+    this.#config = !config || ObjectHelper.isObject(config, true)
+      ? new NotificationConfigService(<Partial<INotificationConfig>> config)
+      : <INotificationConfigService> config;
+
+    this.#eventEmitter = this.#config.get('eventEmitter');
+  }
+
+  get config(): INotificationConfigService {
+    if (!this.#config) {
+      throw new Error('Undefined Config');
+    }
+    return this.#config;
+  }
+
+  set storage(storage: Storage) {
+    this.#storage = storage;
+  }
+
+  get storage(): Storage {
+    if (!this.#storage) {
+      throw new Error('Undefined Storage');
+    }
+    return this.#storage;
+  }
+
+  set transports(transports: ITransportCollection) {
+    this.#transports = transports;
+  }
+
+  get transports(): ITransportCollection {
+    if (!this.#transports) {
+      throw new Error('Undefined Transports');
+    }
+    return this.#transports;
+  }
+
+  get transportAliases(): string[] {
+    return Object.getOwnPropertyNames(this.transports);
   }
 
   getTransport(alias: string): ITransport {
-    const transport = this._transports[alias];
+    const transport = this.transports[alias];
     if (!transport) {
       throw new Error(`Unknown transport: '${alias}'`);
     }
@@ -86,7 +107,7 @@ export class NotificationService<
       transport = this.getTransport(transport);
     }
 
-    return this._config.get<T>(name, transport.config);
+    return this.config.get<T>(name, transport.config);
   }
 
   /**
