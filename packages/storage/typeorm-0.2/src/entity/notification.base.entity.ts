@@ -1,13 +1,12 @@
-import { INotificationBaseEntity, IObject, NotificationStatusEnum } from '@node-notifications/core';
+import { INotificationHistoryEntity, INotificationUser, IObject, NotificationStatusEnum, PK } from '@node-notifications/core';
 import { Column, CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 
-/**
- * Notifications base class
- */
-export abstract class NotificationBaseEntity implements INotificationBaseEntity<number> {
+export abstract class NotificationBaseEntity<Id extends PK = PK, UserId extends PK = PK>
+  implements INotificationHistoryEntity<Id, UserId> {
+
   /** Primary key */
   @PrimaryGeneratedColumn({ type: 'bigint' })
-  id: number;
+  id: Id;
 
   /** Notification status */
   @Column('enum', {
@@ -15,6 +14,20 @@ export abstract class NotificationBaseEntity implements INotificationBaseEntity<
     enum: NotificationStatusEnum,
   })
   status: NotificationStatusEnum;
+
+  /** Recipient */
+  @Column({ type: 'varchar', name: 'recipient_id', length: 40 })
+  recipientId: UserId;
+
+  @Column({ type: 'varchar', name: 'recipient_type', nullable: true, default: null, length: 20 })
+  recipientType?: string;
+
+  /** Sender */
+  @Column({ type: 'varchar', name: 'sender_id', nullable: true, default: null, length: 40 })
+  senderId?: UserId;
+
+  @Column({ type: 'varchar', name: 'sender_type', nullable: true, default: null, length: 20 })
+  senderType?: string;
 
   /** Transport Alias */
   @Column('varchar')
@@ -39,4 +52,32 @@ export abstract class NotificationBaseEntity implements INotificationBaseEntity<
   /** Created At */
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date = new Date();
+
+  /** Recipient */
+
+  get recipient(): INotificationUser<UserId> {
+    return {
+      id: this.recipientId,
+      type: this.recipientType,
+    };
+  }
+
+  set recipient(recipient: INotificationUser<UserId>) {
+    this.recipientId = recipient.id;
+    this.recipientType = recipient.type;
+  }
+
+  /** Sender */
+
+  get sender(): INotificationUser<UserId> | undefined {
+    return this.senderId ? {
+      id: this.senderId,
+      type: this.senderType,
+    } : undefined;
+  }
+
+  set sender(sender: INotificationUser<UserId> | undefined) {
+    this.senderId = sender?.id;
+    this.senderType = sender?.type;
+  }
 }

@@ -1,18 +1,21 @@
 import EventEmitter from 'events';
 import { ObjectHelper } from '../helper';
 import {
-  IErrorHandler,
+  Criteria,
+  IBatchNotification,
   ILeakyBucketService,
-  INotification,
-  INotificationBaseEntity,
   INotificationConfig,
-  INotificationConfigService,
-  INotificationEntity,
+  INotificationHistoryRepo,
   INotificationQueueEntity,
-  INotificationStorage,
+  INotificationQueueRepo,
+  INotificationUser,
+  IResendStrategy,
   IResponse,
   ITransport,
   ITransportCollection,
+  ITransportConfig,
+  ITransportConfigService,
+  ITransportParams,
 } from '../interface';
 import { INotificationEvent } from '../interface/event/notification.event';
 import {
@@ -23,276 +26,234 @@ import {
   PK,
   PROCESSING_STATUSES,
 } from '../type';
-import { NotificationConfigService } from './notification.config.service';
+import { TransportConfigService } from './transport-config.service';
 
-export class NotificationService<
-  Storage extends INotificationStorage = INotificationStorage,
-  Notification extends INotification = INotification
-> {
-  #storage?: Storage;
-  #transports?: ITransportCollection;
-  #config: INotificationConfigService;
-  #eventEmitter: EventEmitter;
+export class NotificationService {
+  readonly isMonoRepo: boolean;
 
-  constructor(
-    storage?: Storage,
-    transports?: ITransportCollection,
-    defaultConfig?: Partial<INotificationConfig> | INotificationConfigService,
-  ) {
-    this.config = defaultConfig;
+  protected readonly historyRepo: INotificationHistoryRepo;
+  protected readonly queueRepo: INotificationQueueRepo;
+  protected readonly transports: ITransportCollection;
+  protected readonly transportConfig: ITransportConfigService;
+  protected readonly eventEmitter: EventEmitter;
 
-    if (storage) {
-      this.storage = storage;
-    }
-    if (transports) {
-      this.transports = transports;
-    }
+  constructor(config: INotificationConfig) {
+    this.historyRepo = config.historyRepo;
+    this.queueRepo = config.queueRepo;
+
+    // @ts-ignore
+    this.isMonoRepo = this.historyRepo === this.queueRepo;
+
+    this.transports = config.transports;
+    this.transportConfig = new TransportConfigService(config.transportConfig);
+
+    this.eventEmitter = config.eventEmitter ?? new EventEmitter();
   }
 
-  get eventEmitter(): EventEmitter {
-    return this.#eventEmitter;
+  getEventEmitter(): EventEmitter {
+    return this.eventEmitter;
   }
 
-  set config(config: Partial<INotificationConfig> | INotificationConfigService | undefined) {
-    this.#config = !config || ObjectHelper.isObject(config, true)
-      ? new NotificationConfigService(<Partial<INotificationConfig>> config)
-      : <INotificationConfigService> config;
-
-    this.#eventEmitter = this.#config.get('eventEmitter');
-  }
-
-  get config(): INotificationConfigService {
-    if (!this.#config) {
-      throw new Error('Undefined Config');
-    }
-    return this.#config;
-  }
-
-  set storage(storage: Storage) {
-    this.#storage = storage;
-  }
-
-  get storage(): Storage {
-    if (!this.#storage) {
-      throw new Error('Undefined Storage');
-    }
-    return this.#storage;
-  }
-
-  set transports(transports: ITransportCollection) {
-    this.#transports = transports;
-  }
-
-  get transports(): ITransportCollection {
-    if (!this.#transports) {
-      throw new Error('Undefined Transports');
-    }
-    return this.#transports;
-  }
-
-  get transportAliases(): string[] {
+  getTransportAliases(): string[] {
     return Object.getOwnPropertyNames(this.transports);
   }
 
   getTransport(alias: string): ITransport {
     const transport = this.transports[alias];
     if (!transport) {
-      throw new Error(`Unknown transport: '${alias}'`);
+      throw new Error(`Unknown transport: '${ alias }'`);
     }
     return transport;
   }
 
-  getTransportConfig<T>(name: keyof INotificationConfig, transport: string | ITransport): T {
+  getTransportConfig<T>(name: keyof ITransportConfig, transport: string | ITransport): T {
     if (typeof transport === 'string') {
       transport = this.getTransport(transport);
     }
 
-    return this.config.get<T>(name, transport.config);
+    return this.transportConfig.get<T>(name, transport.config);
   }
 
   /**
-   * Mark Notification (history) "as read"
+   * Mark Notification "as read"
    */
-  async markAsRead(id: string): Promise<INotificationEntity | null> {
-    return this.storage.notificationRepo?.markAsRead(id) ?? null;
+  markAsRead<Id extends PK = PK>(criteria: Criteria<Id>): Promise<number | undefined> {
+    return Promise.resolve(this.historyRepo.markAsRead(criteria));
   }
 
   /**
    * Creates a Notification and queues it or force sent it by certain transports
    */
-  async send(data: Notification): Promise<INotificationQueueEntity[]> {
-    if (ObjectHelper.isEmpty(data.transports)) {
+  async send(notification: IBatchNotification, transports: ITransportParams | string[]): Promise<INotificationQueueEntity[]> {
+    if (ObjectHelper.isEmpty(transports)) {
       return [];
     }
 
-    const nextSend = new Date(Math.floor((new Date()).getTime() / 60000) * 60000);
+    const queue: INotificationQueueEntity[] = [];
+    const now = new Date();
 
-    const transports = Array.isArray(data.transports) ? data.transports : Object.getOwnPropertyNames(data.transports);
+    const transportAliases: string[] = (Array.isArray(transports) ? transports : Object.getOwnPropertyNames(transports));
+    let recipients: INotificationUser[] = Array.isArray(notification.recipient) ? notification.recipient : [notification.recipient];
+    recipients = recipients.filter((item, ind) => recipients.findIndex(({ id }) => id == item.id) === ind);
 
-    return <INotificationQueueEntity[]> (await Promise.all(
-      transports.map(async (alias: string) => {
-        const transportData = await this.getTransport(alias).dataProvider
-          .prepareTransportData(data, ObjectHelper.value(data.transports, alias));
+    for (const transport of transportAliases) {
+      try {
+        const dataProvider = this.getTransport(transport).dataProvider;
+        const transportParams = ObjectHelper.value(transports, transport);
 
-        const baseData: Partial<INotificationBaseEntity<PK>> = {
-          status: NotificationStatusEnum.NEW,
-          transport: alias,
-          transportData,
-        };
+        for (const recipient of recipients) {
+          try {
+            // Add to Queue
+            const queueEntity = await this.queueRepo.addToQueue({
+              status: NotificationStatusEnum.NEW,
+              recipient,
+              transport,
+              transportData: await dataProvider.prepareTransportData({ ...notification, recipient }, transportParams),
+              sender: notification.sender,
+              nextSend: now,
+              inProcess: true,
+            });
 
-        const notification = (await this.storage.notificationRepo?.createEntity({
-          ...baseData,
-          recipientId: typeof data.recipient !== 'string' ? data.recipient?.id : undefined,
-          recipientType: typeof data.recipient !== 'string' ? data.recipient?.type : undefined,
-          senderId: typeof data.sender !== 'string' ? data.sender?.id : undefined,
-          senderType: typeof data.sender !== 'string' ? data.sender?.type : undefined,
-        })) ?? null;
+            this.eventEmitter.emit(NOTIFICATION_CREATED, <INotificationEvent> {
+              transport: transport,
+              item: queueEntity,
+            });
 
-        const queueEntity = await this.storage.queueRepo.createEntity({
-          ...baseData,
-          notification,
-          nextSend: nextSend,
-        });
-        if (!queueEntity) {
-          console.error(`Can't insert notification (${alias}) to queue:\n${JSON.stringify(data)}`);
-          return null;
+            if (queueEntity.inProcess) {
+              this.processQueueItem(queueEntity).then();
+            }
+
+            queue.push(queueEntity);
+          } catch (e) {
+            console.error(e);
+          }
         }
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
-        this.eventEmitter.emit(NOTIFICATION_CREATED, <INotificationEvent> {
-          transport: alias,
-          item: queueEntity,
-        });
-
-        return queueEntity;
-      }),
-    )).filter(entity => !!entity);
+    return queue;
   }
 
   /**
-   * Process ITransport Queue
+   * Process Transport Queue
    */
-  processQueue(...transports: string[]) {
+  process(...transports: string[]): void {
     if (!transports.length) {
-      transports = this.transportAliases;
+      transports = this.getTransportAliases();
     }
 
-    transports.forEach(async alias => {
+    transports.forEach(async transport => {
       // Leaky Bucket
-      const leakyBucket = this.getTransportConfig<ILeakyBucketService>('leakyBucket', alias);
-      const limit = await leakyBucket.calcLimit(alias);
+      const leakyBucket = this.getTransportConfig<ILeakyBucketService>('leakyBucket', transport);
+      const limit = await leakyBucket.calcLimit(transport);
       if (limit === 0) {
-        return null;
-      }
-
-      // Processing
-      const queueItems = await this.storage.queueRepo.findForProcessing(alias, limit);
-      if (!queueItems.length) {
         return;
       }
 
-      await Promise.all(queueItems.map(entity => this.process(entity)));
+      // Processing
+      const queue = await this.queueRepo.findForProcessing(transport, limit);
+      if (!queue.length) {
+        return;
+      }
+
+      for (const item of queue) {
+        await this.processQueueItem(item);
+      }
     });
   }
 
   /**
    * Process a particular IQueueEntity
    */
-  async process(queueEntity: INotificationQueueEntity): Promise<INotificationQueueEntity | null> {
-    if (this.storage.notificationRepo && !queueEntity.notification) {
-      throw new Error(`queue '${queueEntity.id}': Undefined property 'IQueueEntity::notification'.\nIt must be instance of INotificationEntity.`);
-    }
+  async processQueueItem(queueEntity: INotificationQueueEntity): Promise<INotificationQueueEntity> {
     if (!queueEntity.inProcess || !PROCESSING_STATUSES.includes(queueEntity.status)) {
-      console.warn(`Unprocessed queue (#${queueEntity.id}), inProcess: ${queueEntity.inProcess}, status: '${queueEntity.status}'.\n`
-        + `Only statuses '${PROCESSING_STATUSES.join("','")}' with attribute inProcess = true can be processed.`);
-      return null;
+      console.warn(
+        `Unprocessed queue (#${ queueEntity.id }), inProcess: ${ queueEntity.inProcess }, status: '${ queueEntity.status }'.\n`
+        + `Only statuses '${ PROCESSING_STATUSES.join('\',\'') }' with attribute inProcess = true can be processed.`,
+      );
+      return queueEntity;
     }
-
-    let processed: INotificationQueueEntity | null = null;
 
     // Processing
-
     try {
-      const transport = this.getTransport(queueEntity.transport);
+      queueEntity.sentAt = new Date(Math.floor((new Date()).getTime() / 1000) * 1000);
 
       this.eventEmitter.emit(NOTIFICATION_PROCESSING, <INotificationEvent> {
         transport: queueEntity.transport,
         item: queueEntity,
       });
 
+      const transport = this.getTransport(queueEntity.transport);
       let response: IResponse;
+
       if (NotificationStatusEnum.WAIT === queueEntity.status) {
         if (!queueEntity.transportResponse) {
-          throw new Error(`Unknown 'transportResponse' for QueueEntity (id: ${queueEntity.id}) with status '${queueEntity.status}'`);
+          throw new Error(
+            `Unknown 'transportResponse' for Notification (id: ${ queueEntity.id }) with status '${ queueEntity.status }'`,
+          );
         }
         response = await transport.checkStatus(queueEntity.transportResponse);
       } else {
         queueEntity.sentAttempts++;
         response = await transport.send(queueEntity.transportData);
       }
-      processed = await this.processResponse(queueEntity, response);
+
+      // Process Response
+      queueEntity = await this.processResponse(queueEntity, response);
 
       this.eventEmitter.emit(NOTIFICATION_PROCESSED, <INotificationEvent> {
         transport: queueEntity.transport,
-        item: processed,
+        item: queueEntity,
       });
 
     } catch (error) {
-      console.error(error instanceof Error ? error.message : 'Unknown Error');
-      return null;
+      console.error(error instanceof Error ? error.stack : 'Unknown Error');
+      return queueEntity;
     }
 
-    return processed;
+    return queueEntity;
   }
 
   protected async processResponse(queueEntity: INotificationQueueEntity, response: IResponse): Promise<INotificationQueueEntity> {
-    // Update Queue
-
     queueEntity.status = response.status;
     queueEntity.transportResponse = response.response;
-    queueEntity.sentAt = new Date(Math.floor((new Date()).getTime() / 1000) * 1000);
-    queueEntity.nextSend = null;
-    queueEntity.inProcess = false;
 
     // Error Processing
+    queueEntity.nextSend = null;
 
-    if (NotificationStatusEnum.ERROR === response.status) {
+    if (NotificationStatusEnum.ERROR === queueEntity.status) {
       const transport = this.getTransport(queueEntity.transport);
-      const errorHandler = this.getTransportConfig<IErrorHandler>('errorHandler', transport);
 
-      queueEntity = await errorHandler.handleError(queueEntity, transport, response);
-      if (!queueEntity.nextSend) {
+      const resendStrategy = this.getTransportConfig<IResendStrategy>('resendStrategy', transport);
+      const nextSend = resendStrategy.calcNextSend(queueEntity.sentAttempts, queueEntity.sentAt!);
+      if (nextSend) {
+        queueEntity.nextSend = nextSend;
+      } else {
         queueEntity.status = NotificationStatusEnum.FAILED;
       }
     }
 
-    // Update Notification
+    // Update Queue
+    queueEntity.inProcess = false;
+    queueEntity = await this.queueRepo.updateQueue(queueEntity.id, queueEntity);
 
-    if (this.storage.notificationRepo && queueEntity.notification) {
-      queueEntity.notification = await this.storage.notificationRepo.updateEntity({
-        ...queueEntity.notification,
-        status: queueEntity.status,
-        transportResponse: queueEntity.transportResponse,
-        sentAttempts: queueEntity.sentAttempts,
-        sentAt: queueEntity.sentAt,
-      });
-    }
-
-    // Storage processing
-
-    return this.updateStorage(queueEntity);
-  }
-
-  protected async updateStorage(queueEntity: INotificationQueueEntity): Promise<INotificationQueueEntity> {
     if (!PROCESSING_STATUSES.includes(queueEntity.status)) {
-      this.storage.queueRepo.deleteById(queueEntity.id).then();
-      return queueEntity;
+      const { id, nextSend, inProcess, ...notificationData } = queueEntity;
+
+      if (this.isMonoRepo) {
+        // Update History
+        await this.historyRepo.updateHistory(id, notificationData);
+      } else {
+        // Create History
+        await this.historyRepo.createHistory(notificationData);
+
+        // Delete From Queue
+        this.queueRepo.deleteFromQueue({ id }).then();
+      }
     }
 
-    const updated = await this.storage.queueRepo.updateEntity(queueEntity);
-    if (!updated) {
-      throw new Error(`Can't update queue: '${queueEntity.id}'`);
-    }
-
-    return updated;
+    return queueEntity;
   }
 }

@@ -3,9 +3,9 @@ import { IResponse } from '../response';
 import { IDataProvider } from './data.provider';
 import { ITransportConfig } from './transport.config';
 
-export type ITransportCollection = { [alias: string]: ITransport };
+export type ITransportParams<TransportData extends IObject = IObject> = { [alias: string]: TransportData };
 
-export type TransportParams = { [alias: string]: IObject };
+export type ITransportCollection<TransportData extends IObject = IObject> = { [alias: string]: ITransport<TransportData> };
 
 /** Transport Interface */
 export interface ITransport<TransportData extends IObject = IObject> {

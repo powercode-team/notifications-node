@@ -29,7 +29,7 @@ export class ConsoleTransportTest extends AbstractTransport<IConsoleData> {
 
     await sleep(randomInt(this.delay.min, this.delay.max) * 1000);
 
-    console.log(`Send to: ${data.to}, Result: ${success}\n Data: ${data.text}`);
+    console.log(`Send to: ${ data.to }, Result: ${ success }\n Data: ${ data.text }`);
 
     return Promise.resolve({
       status: success ? NotificationStatusEnum.SENT : NotificationStatusEnum.ERROR,

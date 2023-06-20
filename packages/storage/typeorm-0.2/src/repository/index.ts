@@ -1,3 +1,4 @@
-export * from './base.repository';
-export * from './notification-queue.repository';
-export * from './notification.repository';
+export * from './notification.base.repo';
+export * from './notification.repo';
+export * from './notification.history.repo';
+export * from './notification.queue.repo';

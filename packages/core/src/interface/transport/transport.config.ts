@@ -1,19 +1,19 @@
-import { IErrorHandler, ILeakyBucketService } from '../service';
+import { ILeakyBucketService, IResendStrategy } from '../service';
 
 export interface ITransportConfig {
-  /**
-   * Error Processing
-   *
-   * If defined, overrides the general configuration for this transport
-   */
-  errorHandler?: IErrorHandler;
-
   /**
    * Leaky Bucket
    *
    * If defined, overrides the general configuration for this transport
    */
   leakyBucket?: ILeakyBucketService;
+
+  /**
+   * Leaky Bucket
+   *
+   * If defined, overrides the general configuration for this transport
+   */
+  resendStrategy?: IResendStrategy;
 
   /**
    * Processing Interval (sec)

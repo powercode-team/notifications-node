@@ -1,1 +1,1 @@
-export * from './typeorm.storage';
+export * from './typeorm-repo.factory';

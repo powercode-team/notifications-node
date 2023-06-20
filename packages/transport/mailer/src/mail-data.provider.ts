@@ -6,23 +6,21 @@ import { IMailData } from './mail-data.interface';
  */
 export class MailDataProvider<Notification extends INotification = INotification> implements IDataProvider<IMailData, Notification> {
   prepareTransportData(notification: Notification, transportData?: Partial<IMailData> | null): Promise<IMailData> {
-    if (typeof notification.recipient !== 'string' && !notification.recipient?.email) {
-      throw new Error(`Undefined email for recipient: ${notification.recipient}`);
+    if (!notification.recipient?.email) {
+      throw new Error(`Undefined email for recipient: ${ JSON.stringify(notification.recipient) }`);
+    }
+    if (notification.sender && !notification.sender.email) {
+      throw new Error(`Undefined email for sender: ${ JSON.stringify(notification.sender) }`);
     }
 
     const mailerData: IMailData = {
-      to: typeof notification.recipient === 'string'
-        ? <string> notification.recipient
-        : `${notification.recipient.email} ${notification.recipient.name ?? ''}`,
-
-      subject: typeof notification.payload === 'string' ? undefined : notification.payload.subject,
-      html: typeof notification.payload === 'string' ? notification.payload : notification.payload.body,
+      to: `${ notification.recipient.email } ${ notification.recipient.name ?? '' }`,
+      subject: typeof notification.data === 'string' ? undefined : notification.data.subject,
+      html: typeof notification.data === 'string' ? notification.data : notification.data.body,
     };
 
     if (notification.sender) {
-      mailerData.from = typeof notification.sender === 'string'
-        ? <string> notification.recipient
-        : `${notification.sender.email} ${notification.sender.name ?? ''}`;
+      mailerData.from = `${ notification.sender.email } ${ notification.sender.name ?? '' }`;
     }
 
     return Promise.resolve({ ...mailerData, ...transportData });

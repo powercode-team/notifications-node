@@ -29,7 +29,7 @@
     "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf lib/*",
     "build": "tsc --build",
     "rebuild": "yarn clean && yarn build",
-    "build-dev": "tsc --build && tsc --sourceMap --declarationMap",
+    "build-dev": "tsc --sourceMap --declarationMap",
     "rebuild-dev": "yarn clean && yarn build-dev",
     "test": "jest",
     "link": "yarn link"

@@ -12,18 +12,18 @@ export class NotificationQueueManager {
    */
   start(...transports: string[]): NotificationQueueManager {
     if (!transports.length) {
-      transports = this.service.transportAliases;
+      transports = this.service.getTransportAliases();
     }
 
-    transports.forEach(alias => {
-      const timer = this.timers.get(alias);
+    transports.forEach(transport => {
+      const timer = this.timers.get(transport);
       if (!timer) {
-        const processingInterval: number = this.service.getTransportConfig('processingInterval', alias);
+        const processingInterval: number = this.service.getTransportConfig('processingInterval', transport);
         if (processingInterval < 1) {
-          throw new Error(`Error transport (${alias}) processingInterval: '${processingInterval}'`);
+          throw new Error(`Error transport (${ transport }) processingInterval: '${ processingInterval }'`);
         }
 
-        this.timers.set(alias, setInterval(() => this.service.processQueue(alias), processingInterval * 1000));
+        this.timers.set(transport, setInterval(() => this.service.process(transport), processingInterval * 1000));
       }
     });
 

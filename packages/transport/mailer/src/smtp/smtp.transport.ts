@@ -8,8 +8,8 @@ export class SmtpTransport extends AbstractTransport<IMailData> {
   protected transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(
-    config: ISmtpTransportConfig,
     public readonly dataProvider: IDataProvider<IMailData>,
+    config: ISmtpTransportConfig,
   ) {
     super(dataProvider);
 

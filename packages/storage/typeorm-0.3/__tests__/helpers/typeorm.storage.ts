@@ -3,12 +3,12 @@ import { createDatabase, dropDatabase } from 'typeorm-extension';
 import { StorageOptions, TypeOrmStorage } from '../..';
 
 export class TypeOrmStorageTest extends TypeOrmStorage {
-  async initialize(options: StorageOptions): Promise<TypeOrmStorageTest> {
+  async initialize(options: StorageOptions): Promise<this> {
     const dataSource = await this.dataSourceInstance(options);
 
     const dataSourceOptions = <DataSourceOptions> {
       ...dataSource.options,
-      database: `${dataSource.options.database}_test_${(new Date()).getTime()}`,
+      database: `${ dataSource.options.database }_test_${ (new Date()).getTime() }`,
       migrations: ['./node_modules/@node-notifications/storage-typeorm-0.3/**/migrations/*.js'],
       logging: false,
       synchronize: false,
@@ -30,7 +30,7 @@ export class TypeOrmStorageTest extends TypeOrmStorage {
     }
 
     if (delay > 0) {
-      console.log(`Auto cleanup through ${delay} sec ...`);
+      console.log(`Auto cleanup through ${ delay } sec ...`);
       setTimeout(() => this.cleanup(dataSource), delay * 1000);
     } else {
       await this.cleanup(dataSource);

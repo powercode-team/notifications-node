@@ -14,7 +14,7 @@ The Core module provide basic notifications/queue logic and interfaces:
 
 - Notification service with queue;
 - Notification history;
-- Configurable error processing: Default ResendErrorHandler with "Resend Strategy";
+- Configurable "Resend Strategy";
 - Configurable "Leaky Bucket" provides transport limitation of send count per (time or by try);
 
 ## Services
@@ -31,7 +31,6 @@ The Core module provide basic notifications/queue logic and interfaces:
 // Internal configuration:
 <INotificationConfig> {
   eventEmitter: new EventEmitter(),
-  errorHandler: new DummyErrorHandler(),
   leakyBucket: new DummyBucketService(),
   processingInterval: 3,
 }
@@ -53,7 +52,6 @@ import {
   NotificationQueueManager,
   NotificationService,
   QUEUE_BEFORE_PROCESSING,
-  ResendErrorHandler,
 } from '@node-notifications/core';
 import { randomInt, randomUUID } from 'crypto';
 
@@ -74,16 +72,16 @@ async function main() {
     // optionally change default configuration
     // In addition this configuration can be overridden by ITransport::config (individualy for each transport)
     {
-      // ResendErrorHandler with GeometryProgressionStrategy for "error processing"
-      // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
-      // Sample: 10, 20, 40, 80, 160, ... 3600, 3600, ... | max to 20 times or success response
-      errorHandler: new ResendErrorHandler(new GeometryProgressionStrategy(20, 10, 3600)),
-
       // ILeakyBucketService
       // For example send max 10 messages for each transports by one try
       leakyBucket: new LeakyBucketService(10),
       // Or max 8 messages for each transports in 15 sec
       // leakyBucket: new LeakyBucketService(8, 15),
+
+      // ResendStrategy with GeometryProgressionResendStrategy
+      // Try resend 20 times from 10 sec interval to 3600 sec used geometry progression (denom 2) to calc next "wait" interval
+      // Sample: 10, 20, 40, 80, 160, ... 3600, 3600, ... | max to 20 times or success response
+      resendStrategy: new GeometryProgressionStrategy(20, 10, 3600),
 
       // Override processing interval (default: 3 sec)
       processingInterval: 5, // sec
@@ -92,7 +90,7 @@ async function main() {
 
   // Sample Notification subscriber
   service.eventEmitter.on(QUEUE_BEFORE_PROCESSING, (event: IQueueProcessingEvent) => {
-    console.info(`before processing ${event.items.length} at ${(new Date()).toLocaleTimeString()}:`);
+    console.info(`before processing ${ event.items.length } at ${ (new Date()).toLocaleTimeString() }:`);
   });
 
   // Instantiate Notification Queue Manager and start Queue Processing

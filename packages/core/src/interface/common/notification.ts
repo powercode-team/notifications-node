@@ -1,20 +1,24 @@
-import { TransportParams } from '../transport/transport';
-import { INotificationPayload } from './notification-payload';
 import { INotificationUser } from './notification-user';
+import { IObject } from './object';
+
+/**
+ * Batch Notifications Interface
+ */
+export interface IBatchNotification<Data = IObject | string> {
+  /** Notification Recipient */
+  recipient: INotificationUser | INotificationUser[];
+
+  /** Notification Data */
+  data: Data;
+
+  /** Optional Sender */
+  sender?: INotificationUser;
+}
 
 /**
  * Notification Interface
  */
-export interface INotification {
-  /** Notification recipient */
-  recipient?: INotificationUser | string;
-
-  /** Optional sender */
-  sender?: INotificationUser | string;
-
-  /** Payload data */
-  payload: INotificationPayload | string;
-
-  /** Transports: [alias] | TransportParams */
-  transports: string[] | TransportParams;
+export interface INotification<Data = IObject | string> extends IBatchNotification<Data> {
+  /** Notification Recipient */
+  recipient: INotificationUser;
 }

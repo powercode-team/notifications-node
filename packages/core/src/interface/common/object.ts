@@ -1,4 +1,3 @@
-export interface IObject extends Partial<object> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+export interface IObject<Value = any> extends Partial<object> {
+  [key: string]: Value;
 }

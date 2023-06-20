@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>App</title>
+</head>
+<body>
+
+<form action="/mail/send" method="post" style="width: 300px; padding: 10px">
+    <label for="recipient">Recipient:</label><br>
+    <input id="recipient" type="text" name="email" style="padding: 5px"><br>
+
+    <label for="message">Message:</label><br>
+    <textarea id="message" rows="5" name="message" style="padding: 5px"></textarea><br>
+
+    <input type="submit" value="Send" style="margin-top: 5px">
+</form>
+
+{{#if queue}}
+<div style="margin-top: 20px">Queue:</div>
+{{/if}}
+
+<ul>
+    {{#each queue}}
+        <li>{{stringify this}}</li>
+    {{/each}}
+</ul>
+
+<div style="margin-top: 20px">History:</div>
+<ul>
+    {{#each notifications}}
+        <li>{{stringify this}}</li>
+    {{/each}}
+</ul>
+
+</body>
+</html>

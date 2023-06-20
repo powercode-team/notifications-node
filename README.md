@@ -7,9 +7,8 @@
 #### Features:
 
 - queue
-- history
-- error processing
 - leaky bucket
+- resend on error with different strategy
 
 ## Install
 
@@ -17,13 +16,13 @@
 
 ## Documentation
 
-- [Notifications Core](./packages/core/README.md)
-
-### Transports
-
-- [Nodemailer transport](./packages/transport/mailer/README.md)
+- [Notification Core](./packages/core/README.md)
 
 ### Storages
 
 - [TypeORM v0.2](./packages/storage/typeorm-0.2/README.md)
 - [TypeORM v0.3](./packages/storage/typeorm-0.3/README.md)
+
+### Transports
+
+- [Nodemailer transport](./packages/transport/mailer/README.md)

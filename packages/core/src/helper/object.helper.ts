@@ -6,7 +6,7 @@ export class ObjectHelper {
     return null != object && typeof object === 'object' && (!strictly || object.constructor.name === 'Object');
   }
 
-  static isEmpty(object: IObject | Array<unknown>): boolean {
+  static isEmpty(object: unknown | Array<unknown>): boolean {
     return null == object || !(Array.isArray(object) ? object.length : Object.getOwnPropertyNames(object).length);
   }
 
