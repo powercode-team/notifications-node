@@ -1,6 +1,6 @@
 {
   "name": "@node-notifications/core",
-  "version": "2.1.5",
+  "version": "3.0.0",
   "license": "ISC",
   "description": "Notification System Core",
   "author": "and.xdev <and.xdev@gmail.com>",
