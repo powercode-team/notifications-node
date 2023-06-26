@@ -3,6 +3,7 @@ import { ObjectHelper } from '../helper';
 import {
   Criteria,
   IBatchNotification,
+  IEventEmitter,
   ILeakyBucketService,
   INotificationConfig,
   INotificationHistoryRepo,
@@ -35,7 +36,7 @@ export class NotificationService {
   protected readonly queueRepo: INotificationQueueRepo;
   protected readonly transports: ITransportCollection;
   protected readonly transportConfig: ITransportConfigService;
-  protected readonly eventEmitter: EventEmitter;
+  protected readonly eventEmitter: IEventEmitter;
 
   constructor(config: INotificationConfig) {
     this.historyRepo = config.historyRepo;
@@ -50,20 +51,20 @@ export class NotificationService {
     this.eventEmitter = config.eventEmitter ?? new EventEmitter();
   }
 
-  getEventEmitter(): EventEmitter {
-    return this.eventEmitter;
+  getEventEmitter<EventEmitter extends IEventEmitter = IEventEmitter>(): EventEmitter {
+    return this.eventEmitter as EventEmitter;
   }
 
   getTransportAliases(): string[] {
     return Object.getOwnPropertyNames(this.transports);
   }
 
-  getTransport(alias: string): ITransport {
+  getTransport<Transport extends ITransport = ITransport>(alias: string): Transport {
     const transport = this.transports[alias];
     if (!transport) {
       throw new Error(`Unknown transport: '${ alias }'`);
     }
-    return transport;
+    return transport as Transport;
   }
 
   getTransportConfig<T>(name: keyof ITransportConfig, transport: string | ITransport): T {
