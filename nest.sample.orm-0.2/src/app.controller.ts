@@ -37,7 +37,7 @@ export class AppController {
   @Redirect('/mail', 301)
   async sendEmail(@Body() dto: MailDto) {
     await this.notification.send({
-      recipient: { id: randomUUID(), type: 'user', name: 'User Name', email: dto.email },
+      recipients: { id: randomUUID(), type: 'user', name: 'User Name', email: dto.email },
       data: dto.message,
     }, ['smtp']);
   }

@@ -1,13 +1,7 @@
 import { INotificationUser } from './notification-user';
 import { IObject } from './object';
 
-/**
- * Batch Notifications Interface
- */
-export interface IBatchNotification<Data = IObject | string> {
-  /** Notification Recipient */
-  recipient: INotificationUser | INotificationUser[];
-
+interface IBaseNotification<Data = IObject | string> {
   /** Notification Data */
   data: Data;
 
@@ -18,7 +12,15 @@ export interface IBatchNotification<Data = IObject | string> {
 /**
  * Notification Interface
  */
-export interface INotification<Data = IObject | string> extends IBatchNotification<Data> {
+export interface INotification<Data = IObject | string> extends IBaseNotification<Data> {
   /** Notification Recipient */
   recipient: INotificationUser;
+}
+
+/**
+ * Batch Notifications Interface
+ */
+export interface IBatchNotification<Data = IObject | string> extends IBaseNotification<Data> {
+  /** Notification Recipient */
+  recipients: INotificationUser[] | INotificationUser;
 }

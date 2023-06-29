@@ -94,7 +94,7 @@ export class NotificationService {
     const now = new Date();
 
     const transportAliases: string[] = (Array.isArray(transports) ? transports : Object.getOwnPropertyNames(transports));
-    let recipients: INotificationUser[] = Array.isArray(notification.recipient) ? notification.recipient : [notification.recipient];
+    let recipients: INotificationUser[] = Array.isArray(notification.recipients) ? notification.recipients : [notification.recipients];
     recipients = recipients.filter((item, ind) => recipients.findIndex(({ id }) => id == item.id) === ind);
 
     for (const transport of transportAliases) {
